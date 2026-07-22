@@ -28,6 +28,16 @@ class UnusedMethod:
 
 
 @dataclass(frozen=True)
+class UnusedDefinition:
+    """An unused variable, enum, constant, class, property, or field."""
+
+    name: str
+    type: str
+    line: int
+    file: str
+
+
+@dataclass(frozen=True)
 class TcfMethod:
     """Full per-method report for one TCF method. Line numbers are 1-based for display."""
 
@@ -70,6 +80,7 @@ class ProjectSummary:
     tcf_method_count: int
     helper_method_count: int
     unused_method_count: int
+    unused_definition_count: int
 
 
 @dataclass(frozen=True)
@@ -83,4 +94,5 @@ class AnalysisResult:
     tcf_methods: tuple[TcfMethod, ...]
     helper_usage: tuple[HelperUsage, ...]
     unused_methods: tuple[UnusedMethod, ...]
+    unused_definitions: tuple[UnusedDefinition, ...]
     warnings: tuple[str, ...]

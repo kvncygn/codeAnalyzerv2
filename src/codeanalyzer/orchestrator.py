@@ -16,6 +16,7 @@ from .models import (
     HelperUsage,
     ProjectSummary,
     TcfMethod,
+    UnusedDefinition,
     UnusedMethod,
 )
 from .scanner import ScanResult, SourceFile, scan, validate_target
@@ -62,18 +63,20 @@ def build_result(
     helper_callers: dict[HelperRef, set[str]] = {}
     helpers_by_file: dict[str, set[HelperRef]] = {}
     all_non_tcf_methods: list[UnusedMethod] = []
+    all_unused_definitions: list[UnusedDefinition] = []
     csharp_file_count = 0
     csharp_method_count = 0
 
     for sf in scan_result.files:
         if sf.kind.language is Language.CSHARP:
             csharp_file_count += 1
-            counts, names, n_methods, non_tcf = _analyze_csharp(
+            counts, names, n_methods, non_tcf, unused_defs = _analyze_csharp(
                 sf, by_path.get(str(sf.path)), warnings, tcf_methods,
                 helper_callers, helpers_by_file, to_rel,
             )
             csharp_method_count += n_methods
             all_non_tcf_methods.extend(non_tcf)
+            all_unused_definitions.extend(unused_defs)
             per_file.append((sf, counts, names))
         else:
             counts = count(sf.text, find_comment_spans(sf.text))
@@ -105,6 +108,7 @@ def build_result(
         tcf_method_count=len(tcf_methods),
         helper_method_count=len(helper_callers),
         unused_method_count=0, # Will be set below
+        unused_definition_count=0, # Will be set below
     )
 
     helper_usage = tuple(
@@ -130,6 +134,7 @@ def build_result(
         tcf_method_count=summary.tcf_method_count,
         helper_method_count=summary.helper_method_count,
         unused_method_count=len(unused_methods),
+        unused_definition_count=len(all_unused_definitions),
     )
 
     return AnalysisResult(
@@ -140,6 +145,7 @@ def build_result(
         tcf_methods=tuple(tcf_methods),
         helper_usage=helper_usage,
         unused_methods=unused_methods,
+        unused_definitions=tuple(all_unused_definitions),
         warnings=tuple(warnings),
     )
 
@@ -152,11 +158,11 @@ def _analyze_csharp(
     helper_callers: dict[HelperRef, set[str]],
     helpers_by_file: dict[str, set[HelperRef]],
     to_rel: Any,
-) -> tuple[LineCounts, list[str], int, list[UnusedMethod]]:
-    """Process one C# file's analyzer result; returns (counts, tcf_names, method_count, non_tcf_methods)."""
+) -> tuple[LineCounts, list[str], int, list[UnusedMethod], list[UnusedDefinition]]:
+    """Process one C# file's analyzer result; returns (counts, tcf_names, method_count, non_tcf_methods, unused_defs)."""
     if file_result is None:
         warnings.append(f"{sf.rel_path}: not analyzed by the C# engine")
-        return LineCounts(), [], 0, []
+        return LineCounts(), [], 0, [], []
 
     if file_result.get("diagnostics", {}).get("hasErrors"):
         warnings.append(f"{sf.rel_path}: possible syntax errors; results may be partial")
@@ -204,4 +210,15 @@ def _analyze_csharp(
             helper_callers.setdefault(href, set()).add(method["name"])
             helpers_by_file.setdefault(href.file, set()).add(href)
 
-    return file_counts, tcf_names, len(methods), non_tcf_methods
+    unused_defs: list[UnusedDefinition] = []
+    for ud in file_result.get("unusedDefinitions", []):
+        unused_defs.append(
+            UnusedDefinition(
+                name=ud["name"],
+                type=ud["type"],
+                line=ud["line"],
+                file=str(sf.rel_path),
+            )
+        )
+
+    return file_counts, tcf_names, len(methods), non_tcf_methods, unused_defs

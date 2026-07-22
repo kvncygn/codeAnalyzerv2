@@ -17,7 +17,8 @@ public sealed record FileResult(
     bool Ok,
     Diagnostics Diagnostics,
     List<CommentSpan> Comments,
-    List<MethodResult> Methods);
+    List<MethodResult> Methods,
+    List<UnusedDefinition> UnusedDefinitions);
 
 public sealed record Diagnostics(bool HasErrors, int ErrorCount);
 
@@ -34,3 +35,6 @@ public sealed record MethodResult(
 
 /// <summary>A helper used by an TCF method: its simple name and defining file.</summary>
 public sealed record HelperRef(string Name, string File);
+
+/// <summary>An unused variable, enum, constant, class, property, or field.</summary>
+public sealed record UnusedDefinition(string Name, string Type, int Line);

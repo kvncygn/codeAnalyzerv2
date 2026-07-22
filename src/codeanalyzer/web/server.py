@@ -197,6 +197,16 @@ def create_app() -> Flask:
             for m in result.unused_methods
         ]
 
+        unused_definition_data = [
+            {
+                "name": d.name,
+                "type": d.type,
+                "line": d.line,
+                "file": d.file,
+            }
+            for d in result.unused_definitions
+        ]
+
         return render_template(
             "results.html",
             folder=folder,
@@ -206,6 +216,7 @@ def create_app() -> Flask:
             tcf_data=tcf_data,
             helper_data=helper_data,
             unused_method_data=unused_method_data,
+            unused_definition_data=unused_definition_data,
             report_text=render_text(result),
             report_json=render_json(result),
             note=note,

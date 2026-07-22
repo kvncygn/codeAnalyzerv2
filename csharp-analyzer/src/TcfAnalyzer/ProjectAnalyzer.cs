@@ -27,19 +27,45 @@ public static class ProjectAnalyzer
             references: ReferenceLoader.BclReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
+        var usedSymbols = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+        foreach (var (file, tree) in parsed)
+        {
+            var model = compilation.GetSemanticModel(tree);
+            var root = tree.GetCompilationUnitRoot();
+            foreach (var node in root.DescendantNodes())
+            {
+                var symbolInfo = model.GetSymbolInfo(node);
+                if (symbolInfo.Symbol != null)
+                {
+                    usedSymbols.Add(symbolInfo.Symbol.OriginalDefinition);
+                    if (symbolInfo.Symbol.ContainingType != null)
+                    {
+                        usedSymbols.Add(symbolInfo.Symbol.ContainingType.OriginalDefinition);
+                    }
+                }
+
+                var declaredSymbol = model.GetDeclaredSymbol(node);
+                if (declaredSymbol is INamedTypeSymbol namedType)
+                {
+                    if (namedType.BaseType != null) usedSymbols.Add(namedType.BaseType.OriginalDefinition);
+                    foreach (var iface in namedType.Interfaces) usedSymbols.Add(iface.OriginalDefinition);
+                }
+            }
+        }
+
         var results = new List<FileResult>(parsed.Count);
         foreach (var (file, tree) in parsed)
         {
             try
             {
-                results.Add(FileAnalyzer.Analyze(compilation, tree, file.Path, prefix));
+                results.Add(FileAnalyzer.Analyze(compilation, tree, file.Path, prefix, usedSymbols));
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[analyzer] error analyzing {file.Path}: {ex.Message}");
                 results.Add(new FileResult(
                     file.Path, false, new Diagnostics(true, 1),
-                    new List<CommentSpan>(), new List<MethodResult>()));
+                    new List<CommentSpan>(), new List<MethodResult>(), new List<UnusedDefinition>()));
             }
         }
 

@@ -27,6 +27,8 @@ def render_text(result: AnalysisResult) -> str:
     _helper_usage(result, out)
     out.append("")
     _unused_methods(result, out)
+    out.append("")
+    _unused_definitions(result, out)
     if result.warnings:
         out.append("")
         out.append("=== Warnings ===")
@@ -63,6 +65,7 @@ def render_json(result: AnalysisResult) -> dict[str, Any]:
             "tcf_method_count": s.tcf_method_count,
             "helper_method_count": s.helper_method_count,
             "unused_method_count": s.unused_method_count,
+            "unused_definition_count": s.unused_definition_count,
         },
         "files": [
             {
@@ -101,6 +104,15 @@ def render_json(result: AnalysisResult) -> dict[str, Any]:
             }
             for m in result.unused_methods
         ],
+        "unused_definitions": [
+            {
+                "name": d.name,
+                "type": d.type,
+                "line": d.line,
+                "file": d.file,
+            }
+            for d in result.unused_definitions
+        ],
         "warnings": list(result.warnings),
     }
 
@@ -123,6 +135,7 @@ def _project_summary(result: AnalysisResult, out: list[str]) -> None:
         ("TCF methods", s.tcf_method_count),
         ("Helper methods", s.helper_method_count),
         ("Unused methods", s.unused_method_count),
+        ("Unused definitions", s.unused_definition_count),
     )
     for label, value in rows:
         out.append(f"{label:<18}: {value}")
@@ -238,3 +251,12 @@ def _unused_methods(result: AnalysisResult, out: list[str]) -> None:
         return
     for m in result.unused_methods:
         out.append(f"{m.name}  ({m.file}:{m.start_line}-{m.end_line})  complexity={m.cyclomatic_complexity}")
+
+
+def _unused_definitions(result: AnalysisResult, out: list[str]) -> None:
+    out.append("=== Unused Definitions ===")
+    if not result.unused_definitions:
+        out.append("(no unused definitions found)")
+        return
+    for d in result.unused_definitions:
+        out.append(f"{d.name}  [{d.type}]  ({d.file}:{d.line})")

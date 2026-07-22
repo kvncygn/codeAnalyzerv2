@@ -85,6 +85,7 @@
     <div class="stat accent"><span class="stat-num">{{ s.tcf_method_count }}</span><span class="stat-label">TCF methods</span></div>
     <div class="stat accent2"><span class="stat-num">{{ s.helper_method_count }}</span><span class="stat-label">Helper methods</span></div>
     <div class="stat"><span class="stat-num">{{ s.unused_method_count }}</span><span class="stat-label">Unused methods</span></div>
+    <div class="stat"><span class="stat-num">{{ s.unused_definition_count }}</span><span class="stat-label">Unused definitions</span></div>
   </div>
 </section>
 
@@ -295,6 +296,57 @@
     <script type="application/json" id="unused-data">{{ unused_method_data | tojson }}</script>
   {% else %}
     <p class="empty">No unused methods found.</p>
+  {% endif %}
+</section>
+
+<!-- 7. Unused Definitions Summary (paginated + searchable, rendered client-side) -->
+<section class="panel" id="unused-def-section">
+  <div class="panel-head">
+    <h2>Unused Definitions <span class="count-pill">{{ unused_definition_data | length }}</span></h2>
+    {% if unused_definition_data %}
+    <div class="head-controls">
+      <input type="search" id="unused-def-search" class="filter"
+             placeholder="Search definition or file…" aria-label="Search unused definitions">
+      <label class="psize">Per page
+        <select class="page-size" id="unused-def-size">
+          {% for sz in range(50, 501, 50) %}<option value="{{ sz }}">{{ sz }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="button" class="btn btn-sm" id="unused-def-csv" title="Download unused definitions as CSV">⬇ CSV</button>
+    </div>
+    {% endif %}
+  </div>
+  <p class="section-desc">
+    Variables, Enums, Constants, Classes, and Properties that are defined but never used anywhere in the project.
+  </p>
+  {% if unused_definition_data %}
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <div class="table-wrap">
+      <table class="grid sortable">
+        <thead>
+          <tr>
+            <th class="l" data-sort="str">Name</th>
+            <th class="l" data-sort="str">Type</th>
+            <th class="l" data-sort="str">Defined in</th>
+            <th class="n" data-sort="num">Line</th>
+          </tr>
+        </thead>
+        <tbody id="unused-def-list"></tbody>
+      </table>
+    </div>
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <p class="empty" id="unused-def-noresults" hidden>No definitions match your search.</p>
+    <script type="application/json" id="unused-def-data">{{ unused_definition_data | tojson }}</script>
+  {% else %}
+    <p class="empty">No unused definitions found.</p>
   {% endif %}
 </section>
 

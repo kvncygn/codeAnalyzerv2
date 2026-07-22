@@ -9,6 +9,7 @@ from codeanalyzer.models import (
     HelperUsage,
     ProjectSummary,
     TcfMethod,
+    UnusedDefinition,
     UnusedMethod,
 )
 from codeanalyzer.report import build_source_tree, render_text
@@ -28,8 +29,9 @@ def _sample() -> AnalysisResult:
     )
     usage = (HelperUsage(HelperRef("Load", "util/Helpers.cs"), ("TCF_Init",)),)
     unused = (UnusedMethod("Orphan", "util/Helpers.cs", 20, 25, 1),)
-    summary = ProjectSummary(3, LineCounts(38, 26, 8, 1, 4), 2, 5, 2, 1, 1)
-    return AnalysisResult("/proj", "TCF", summary, files, methods, usage, unused, ("u.c: a warning",))
+    unused_defs = (UnusedDefinition("MAX_SIZE", "int", 10, "util/Helpers.cs"),)
+    summary = ProjectSummary(3, LineCounts(38, 26, 8, 1, 4), 2, 5, 2, 1, 1, 1)
+    return AnalysisResult("/proj", "TCF", summary, files, methods, usage, unused, unused_defs, ("u.c: a warning",))
 
 
 def test_sections_are_in_required_order() -> None:
@@ -41,6 +43,7 @@ def test_sections_are_in_required_order() -> None:
         "=== TCF Method Details ===",
         "=== Helper Usage Summary ===",
         "=== Unused Methods ===",
+        "=== Unused Definitions ===",
     ]
     positions = [text.index(h) for h in order]
     assert positions == sorted(positions)

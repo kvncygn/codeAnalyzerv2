@@ -127,4 +127,21 @@ namespace D { class S {
         var r = Run("TCF", ("S.cs", src));
         Assert.Empty(r.Files.SelectMany(f => f.Methods).SelectMany(m => m.UsedHelpers));
     }
+
+    [Fact]
+    public void Detects_unused_definitions()
+    {
+        const string src = @"namespace D { 
+            class S { 
+                private int usedField = 1;
+                private int UnusedField = 2;
+                public int TCF_M() { return usedField; }
+            } 
+        }";
+        var r = Run("TCF", ("S.cs", src));
+        var unused = r.Files.SelectMany(f => f.UnusedDefinitions).ToArray();
+        Assert.Single(unused);
+        Assert.Equal("UnusedField", unused[0].Name);
+        Assert.Equal("Field", unused[0].Type);
+    }
 }

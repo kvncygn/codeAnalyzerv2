@@ -377,6 +377,51 @@
     }
   }
 
+  // --- Unused Definitions Summary ----------------------------------------------
+  function unusedDefRow(d) {
+    return (
+      "<tr>" +
+        '<td class="l mono"><span class="chip chip-strong">' + esc(d.name) + "</span></td>" +
+        '<td class="l mono">' + esc(d.type) + "</td>" +
+        '<td class="l mono muted">' + esc(d.file) + "</td>" +
+        '<td class="n">' + d.line + "</td>" +
+      "</tr>"
+    );
+  }
+
+  var unusedDefSection = document.getElementById("unused-def-section");
+  if (unusedDefSection && document.getElementById("unused-def-data")) {
+    var unusedDefSearch = document.getElementById("unused-def-search");
+    var unusedDef = createPaginator({
+      dataId: "unused-def-data",
+      section: unusedDefSection,
+      container: document.getElementById("unused-def-list"),
+      sizeSelect: document.getElementById("unused-def-size"),
+      noResults: document.getElementById("unused-def-noresults"),
+      renderItem: unusedDefRow,
+      filterFn: function (d) {
+        var q = unusedDefSearch ? unusedDefSearch.value.trim().toLowerCase() : "";
+        if (!q) return true;
+        return d.name.toLowerCase().indexOf(q) !== -1 ||
+               d.type.toLowerCase().indexOf(q) !== -1 ||
+               d.file.toLowerCase().indexOf(q) !== -1;
+      },
+    });
+    if (unusedDef) {
+      if (unusedDefSearch) unusedDefSearch.addEventListener("input", unusedDef.refilter);
+      var udcsv = document.getElementById("unused-def-csv");
+      if (udcsv) {
+        udcsv.addEventListener("click", function () {
+          var rows = [["name", "type", "defined_in", "line"]];
+          unusedDef.data.forEach(function (d) {
+            rows.push([d.name, d.type, d.file, d.line]);
+          });
+          downloadCsv("unused-definitions.csv", rows);
+        });
+      }
+    }
+  }
+
   // --- Native folder picker (index page) ---------------------------------------
   // Calls the local /pick-folder endpoint, which opens an OS dialog on this machine.
   (function () {
