@@ -39,7 +39,7 @@ header h1 { margin: 0; font-size: 1.2rem; letter-spacing: .2px; }
 header h1::before { content: "◧ "; opacity: .7; }
 header .tag { margin: .2rem 0 0; font-size: .82rem; opacity: .75; }
 
-main { max-width: 1040px; margin: 1.5rem auto; padding: 0 1.5rem 3rem; }
+main { max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem 3rem; }
 
 /* ---------- Form (index) ---------- */
 .card {
@@ -64,7 +64,7 @@ main { max-width: 1040px; margin: 1.5rem auto; padding: 0 1.5rem 3rem; }
 .folder-row input { flex: 1; min-width: 0; }
 .folder-row .btn { white-space: nowrap; }
 .app-footer {
-  max-width: 1040px; margin: 0 auto; padding: 1rem 1.5rem 2rem;
+  max-width: 1400px; margin: 0 auto; padding: 1rem 1.5rem 2rem;
   font-size: .78rem; color: var(--muted); text-align: center;
 }
 code { background: var(--line-soft); padding: .05rem .32rem; border-radius: 4px; font-size: .92em; }
