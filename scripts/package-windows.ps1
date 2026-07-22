@@ -19,6 +19,7 @@ Write-Host "== Publishing self-contained analyzer (win-x64) =="
 dotnet publish "$root\csharp-analyzer\src\TcfAnalyzer\TcfAnalyzer.csproj" `
   -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:DebugType=None -p:DebugSymbols=false `
   -o "$root\artifacts\analyzer\win-x64"
 
 Write-Host "== Staging analyzer.exe into the package =="
