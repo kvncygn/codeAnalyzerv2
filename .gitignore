@@ -1,0 +1,30 @@
+# ---- Python ----
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- .NET / C# ----
+[Bb]in/
+[Oo]bj/
+*.user
+.vs/
+
+# ---- PyInstaller / packaging ----
+build/
+dist/
+
+# ---- Published / bundled analyzer binaries (build artifacts) ----
+/artifacts/
+src/codeanalyzer/_bundled/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

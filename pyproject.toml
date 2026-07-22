@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codeanalyzer"
+version = "1.0.0"
+description = "Local-only static code analyzer (TCF/C# + C/C++) with a localhost UI."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.1,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "ruff>=0.6",
+    "black>=24",
+    "mypy>=1.11",
+]
+package = [
+    "pyinstaller>=6,<7",
+]
+
+[project.scripts]
+codeanalyzer = "codeanalyzer.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codeanalyzer"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+addopts = "-q"

@@ -1,0 +1,5 @@
+# Runtime dependency — local-only; the app makes NO network calls at runtime.
+# Authoritative dependency declarations live in pyproject.toml; this file is a
+# convenience pin for `pip install -r`.
+#   ~/.local/bin/uv pip install -r requirements.txt --python .venv/bin/python
+flask==3.1.3

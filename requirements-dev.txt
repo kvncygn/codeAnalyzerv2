@@ -1,0 +1,7 @@
+# Dev / test / lint / type-check tooling (includes runtime deps).
+# Equivalent to:  pip install -e ".[dev]"
+-r requirements.txt
+pytest>=8,<9
+ruff>=0.6
+black>=24
+mypy>=1.11

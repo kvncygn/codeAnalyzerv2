@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>codeAnalyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>codeAnalyzer</h1>
+    <p class="tag">Local-only static code analyzer &middot; runs entirely on this machine</p>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer">
+    codeAnalyzer v{{ app_version }} · runs entirely on this machine — no internet, no
+    telemetry, no source code leaves your computer.
+  </footer>
+
+  <div id="loading-overlay" hidden>
+    <div class="loading-box">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-title">Analyzing…</p>
+      <p class="loading-sub">This can take a few seconds for large folders. The analysis
+        runs entirely on this machine.</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

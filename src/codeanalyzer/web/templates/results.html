@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{# Recursive macro: render the source tree using native <details> for collapsing. #}
+{% macro render_nodes(nodes) %}
+  <ul class="tree">
+    {% for node in nodes %}
+      {% if node.kind == "dir" %}
+        <li>
+          <details open class="tree-dir">
+            <summary><span class="twisty"></span><span class="ico ico-dir"></span>{{ node.name }}/</summary>
+            {{ render_nodes(node.children) }}
+          </details>
+        </li>
+      {% else %}
+        {% set f = node.file %}
+        {% if f.tcf_method_names %}
+          <li>
+            <details class="tree-file">
+              <summary>
+                <span class="twisty"></span><span class="ico ico-file"></span>
+                <span class="fname">{{ f.rel_path.split('/')[-1].split('\\')[-1] }}</span>
+                <span class="tree-meta">{{ f.counts.total }} lines</span>
+                <span class="badge badge-tcf">TCF {{ f.tcf_method_count }}</span>
+                <span class="badge badge-help">Helpers {{ f.helper_method_count }}</span>
+              </summary>
+              <ul class="tree tree-methods">
+                {% for name in f.tcf_method_names %}
+                  <li><a class="method-link" href="#tcf-{{ (f.rel_path ~ '::' ~ name) | slug }}">
+                    <span class="ico ico-fn"></span>{{ name }}</a></li>
+                {% endfor %}
+              </ul>
+            </details>
+          </li>
+        {% else %}
+          <li class="tree-leaf">
+            <span class="twisty twisty-empty"></span><span class="ico ico-file"></span>
+            <span class="fname">{{ f.rel_path.split('/')[-1].split('\\')[-1] }}</span>
+            <span class="tree-meta">{{ f.counts.total }} lines</span>
+            <span class="badge badge-tcf">TCF {{ f.tcf_method_count }}</span>
+            <span class="badge badge-help">Helpers {{ f.helper_method_count }}</span>
+          </li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% block content %}
+{% set s = result.summary %}
+{% set c = s.counts %}
+
+<div class="toolbar">
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">&larr; New analysis</a>
+  <div class="toolbar-meta">
+    <span class="path" title="{{ result.folder }}">{{ result.folder }}</span>
+    <span class="sep">·</span>
+    <span>prefix <code>{{ result.tcf_prefix }}</code></span>
+  </div>
+  <button type="button" class="btn" id="download-btn">Download .txt</button>
+  <button type="button" class="btn" id="download-json">Download .json</button>
+</div>
+
+{% if note %}<div class="note">{{ note }}</div>{% endif %}
+{% if result.warnings %}
+  <details class="panel warn-panel" open>
+    <summary><strong>⚠ {{ result.warnings | length }} warning(s)</strong></summary>
+    <ul class="warn-list">
+      {% for w in result.warnings %}<li>{{ w }}</li>{% endfor %}
+    </ul>
+  </details>
+{% endif %}
+
+<!-- 1. Project Summary -->
+<section class="panel">
+  <h2>Project Summary</h2>
+  <div class="stats">
+    <div class="stat"><span class="stat-num">{{ s.file_count }}</span><span class="stat-label">Source files</span></div>
+    <div class="stat"><span class="stat-num">{{ c.total }}</span><span class="stat-label">Total lines</span></div>
+    <div class="stat"><span class="stat-num">{{ c.code }}</span><span class="stat-label">Code lines</span></div>
+    <div class="stat"><span class="stat-num">{{ c.comment }}</span><span class="stat-label">Comment lines</span></div>
+    <div class="stat"><span class="stat-num">{{ c.inline_comment }}</span><span class="stat-label">Inline comments</span></div>
+    <div class="stat"><span class="stat-num">{{ c.blank }}</span><span class="stat-label">Blank lines</span></div>
+    <div class="stat"><span class="stat-num">{{ s.csharp_file_count }}</span><span class="stat-label">C# files</span></div>
+    <div class="stat"><span class="stat-num">{{ s.csharp_method_count }}</span><span class="stat-label">C# methods</span></div>
+    <div class="stat accent"><span class="stat-num">{{ s.tcf_method_count }}</span><span class="stat-label">TCF methods</span></div>
+    <div class="stat accent2"><span class="stat-num">{{ s.helper_method_count }}</span><span class="stat-label">Helper methods</span></div>
+    <div class="stat"><span class="stat-num">{{ s.unused_method_count }}</span><span class="stat-label">Unused methods</span></div>
+  </div>
+</section>
+
+<!-- 2. File Summary -->
+<section class="panel">
+  <div class="panel-head">
+    <h2>File Summary</h2>
+    <div class="head-controls">
+      <input type="search" id="file-filter" class="filter" placeholder="Filter files…" aria-label="Filter files">
+      <button type="button" class="btn btn-sm" id="file-csv" title="Download this table as CSV">⬇ CSV</button>
+    </div>
+  </div>
+  {% if result.files %}
+  <div class="table-wrap">
+    <table class="grid sortable" id="file-table">
+      <thead>
+        <tr>
+          <th class="l" data-sort="str">File</th><th data-sort="str">Type</th>
+          <th class="n" data-sort="num">Total</th><th class="n" data-sort="num">Code</th>
+          <th class="n" data-sort="num" title="Comment lines">Cmt</th>
+          <th class="n" data-sort="num" title="Inline comment lines">Inl</th>
+          <th class="n" data-sort="num">Blank</th>
+          <th class="n" data-sort="num" title="TCF methods defined in this file">TCF</th>
+          <th class="n" data-sort="num" title="Helper methods defined in this file">Helpers</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in result.files %}
+        <tr>
+          <td class="l mono">{{ f.rel_path }}</td>
+          <td><span class="tag-type" data-type="{{ f.file_type }}">{{ f.file_type }}</span></td>
+          <td class="n">{{ f.counts.total }}</td>
+          <td class="n">{{ f.counts.code }}</td>
+          <td class="n">{{ f.counts.comment }}</td>
+          <td class="n">{{ f.counts.inline_comment }}</td>
+          <td class="n">{{ f.counts.blank }}</td>
+          <td class="n">{{ f.tcf_method_count }}</td>
+          <td class="n">{{ f.helper_method_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="empty">No supported source files found.</p>
+  {% endif %}
+</section>
+
+<!-- 3. Source Tree -->
+<section class="panel">
+  <div class="panel-head">
+    <h2>Source Tree</h2>
+    {% if result.files %}
+    <div class="tree-controls">
+      <button type="button" class="btn btn-sm" id="expand-all">Expand all</button>
+      <button type="button" class="btn btn-sm" id="collapse-all">Collapse all</button>
+    </div>
+    {% endif %}
+  </div>
+  {% if result.files %}
+    <div class="tree-root">
+      <div class="tree-rootlabel"><span class="ico ico-dir"></span>[ROOT]</div>
+      {{ render_nodes(tree) }}
+    </div>
+  {% else %}
+    <p class="empty">Nothing to show.</p>
+  {% endif %}
+</section>
+
+<!-- 4. TCF Method Details (paginated + searchable, rendered client-side) -->
+<section class="panel" id="tcf-section">
+  <div class="panel-head">
+    <h2>TCF Method Details <span class="count-pill" id="tcf-total">{{ tcf_data | length }}</span></h2>
+    {% if tcf_data %}
+    <div class="head-controls">
+      <input type="search" id="tcf-search" class="filter"
+             placeholder="Search method or file…" aria-label="Search TCF methods">
+      <label class="psize">Per page
+        <select class="page-size" id="tcf-size">
+          {% for sz in range(50, 501, 50) %}<option value="{{ sz }}">{{ sz }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="button" class="btn btn-sm" id="tcf-csv" title="Download all TCF methods as CSV">⬇ CSV</button>
+    </div>
+    {% endif %}
+  </div>
+  <p class="section-desc">
+    One entry per method whose name starts with <code>{{ result.tcf_prefix }}</code>.
+    The green badge counts the project helper functions this method <em>calls</em> —
+    those functions are defined elsewhere, not inside the TCF method.
+  </p>
+  {% if tcf_data %}
+    <div class="pager" id="tcf-pager-top" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <div id="tcf-list"></div>
+    <div class="pager" id="tcf-pager-bottom" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <p class="empty" id="tcf-noresults" hidden>No methods match your search.</p>
+    <script type="application/json" id="tcf-data">{{ tcf_data | tojson }}</script>
+  {% else %}
+    <p class="empty">No TCF methods found.</p>
+  {% endif %}
+</section>
+
+<!-- 5. Helper Usage Summary (paginated + searchable, rendered client-side) -->
+<section class="panel" id="helper-section">
+  <div class="panel-head">
+    <h2>Helper Usage Summary <span class="count-pill">{{ helper_data | length }}</span></h2>
+    {% if helper_data %}
+    <div class="head-controls">
+      <input type="search" id="helper-search" class="filter"
+             placeholder="Search helper or file…" aria-label="Search helpers">
+      <label class="psize">Per page
+        <select class="page-size" id="helper-size">
+          {% for sz in range(50, 501, 50) %}<option value="{{ sz }}">{{ sz }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="button" class="btn btn-sm" id="helper-csv" title="Download helper usage as CSV">⬇ CSV</button>
+    </div>
+    {% endif %}
+  </div>
+  <p class="section-desc">
+    Project helper functions — non-TCF methods that at least one TCF method calls — and
+    exactly which TCF methods call each one.
+  </p>
+  {% if helper_data %}
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th class="l">Helper function</th>
+            <th class="l">Defined in</th>
+            <th class="n">Called by</th>
+            <th class="l">TCF methods that call it</th>
+          </tr>
+        </thead>
+        <tbody id="helper-list"></tbody>
+      </table>
+    </div>
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <p class="empty" id="helper-noresults" hidden>No helpers match your search.</p>
+    <script type="application/json" id="helper-data">{{ helper_data | tojson }}</script>
+  {% else %}
+    <p class="empty">No TCF method calls any project helper function.</p>
+  {% endif %}
+</section>
+
+<!-- 6. Unused Method Summary (paginated + searchable, rendered client-side) -->
+<section class="panel" id="unused-section">
+  <div class="panel-head">
+    <h2>Unused Method Summary <span class="count-pill">{{ unused_method_data | length }}</span></h2>
+    {% if unused_method_data %}
+    <div class="head-controls">
+      <input type="search" id="unused-search" class="filter"
+             placeholder="Search method or file…" aria-label="Search unused methods">
+      <label class="psize">Per page
+        <select class="page-size" id="unused-size">
+          {% for sz in range(50, 501, 50) %}<option value="{{ sz }}">{{ sz }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="button" class="btn btn-sm" id="unused-csv" title="Download unused methods as CSV">⬇ CSV</button>
+    </div>
+    {% endif %}
+  </div>
+  <p class="section-desc">
+    Non-TCF methods that are never called by any TCF method.
+  </p>
+  {% if unused_method_data %}
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th class="l">Method Name</th>
+            <th class="l">Defined in</th>
+            <th class="l">Line Range</th>
+            <th class="n">Complexity</th>
+          </tr>
+        </thead>
+        <tbody id="unused-list"></tbody>
+      </table>
+    </div>
+    <div class="pager" hidden>
+      <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" class="btn btn-sm pg-next">Next &rarr;</button>
+    </div>
+    <p class="empty" id="unused-noresults" hidden>No methods match your search.</p>
+    <script type="application/json" id="unused-data">{{ unused_method_data | tojson }}</script>
+  {% else %}
+    <p class="empty">No unused methods found.</p>
+  {% endif %}
+</section>
+
+<textarea id="report-text" hidden>{{ report_text }}</textarea>
+<script type="application/json" id="report-json">{{ report_json | tojson }}</script>
+{% endblock %}
