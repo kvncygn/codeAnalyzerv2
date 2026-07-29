@@ -185,6 +185,8 @@ def create_app() -> Flask:
                 "start": m.start_line,
                 "end": m.end_line,
                 "cx": m.cyclomatic_complexity,
+                "tc": m.time_complexity,
+                "tc_line": m.tc_line,
                 "total": m.counts.total,
                 "code": m.counts.code,
                 "comment": m.counts.comment,

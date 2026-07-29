@@ -28,3 +28,8 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# ---- Generated Reports ----
+code-analysis-report.*
+file-summary.csv
+*.csv

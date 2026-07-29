@@ -204,6 +204,7 @@
       : '<span class="muted">none — this method calls no project helpers</span>';
     var pct = m.ratio * 100;
     var cxClass = m.cx > CX_HIGH ? "cx-high" : (m.cx > CX_WARN ? "cx-warn" : "cx-ok");
+    var tcClass = m.tc !== 'O(1)' && m.tc !== 'O(N)' ? "cx-high" : (m.tc === 'O(N)' ? "cx-warn" : "cx-ok");
     var low = isLowComment(m);
     var lowBadge = low ? '<span class="badge badge-low" title="Low comment ratio for its size">Low comments</span>' : "";
     return (
@@ -213,6 +214,7 @@
           '<span class="method-name">' + esc(m.name) + "</span>" +
           '<span class="method-loc mono">' + esc(m.file) + ":" + m.start + "–" + m.end + "</span>" +
           '<span class="badge ' + cxClass + '" title="Cyclomatic complexity">Cyclomatic Complexity: ' + m.cx + "</span>" +
+          '<span class="badge ' + tcClass + '" title="Time complexity">Time Complexity: ' + m.tc + "</span>" +
           lowBadge +
           '<span class="badge badge-help" title="Project helper functions this method calls">' +
             "calls " + n + (n === 1 ? " helper" : " helpers") + "</span>" +
@@ -225,6 +227,7 @@
             "<span class='metric'><b>" + m.inline + "</b> inline</span>" +
             "<span class='metric'><b>" + m.blank + "</b> blank</span>" +
             "<span class='metric'><b>" + pct.toFixed(0) + "%</b> comments</span>" +
+            (m.tc !== 'O(1)' ? "<span class='metric'>Deepest Loop Line: <b>L" + m.tc_line + "</b></span>" : "") +
           "</div>" +
           '<div class="ratio-bar' + (low ? " ratio-low" : "") + '"><span style="width:' + pct.toFixed(1) + '%"></span></div>' +
           '<div class="helpers-line"><span class="helpers-label">Helper functions this method calls:</span>' +
