@@ -42,6 +42,8 @@ namespace SunumDemosu
             Console.WriteLine("Sistem logu");
         }
 
+
+
         // Helper Metot (TCF_SiparisOlustur_Basarili tarafından çağrıldığı için Helper listesine girer)
         private void VeritabaninaKaydet() 
         {

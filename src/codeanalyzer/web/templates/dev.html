@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('run_dev_analysis') }}" class="card" data-analyze>
+    <label for="folder">Folder path (Developer Analysis)</label>
+    <div class="folder-row">
+      <input id="folder" type="text" name="folder" value="{{ folder }}"
+             placeholder="C:\path\to\source  (or /home/user/src)" autofocus>
+    </div>
+    <button type="submit">Analyze Complexity</button>
+  </form>
+  <p class="hint">
+    Enter an absolute path to the folder. This will analyze all C# methods in the directory for Cyclomatic and Time Complexity.
+  </p>
+{% endblock %}

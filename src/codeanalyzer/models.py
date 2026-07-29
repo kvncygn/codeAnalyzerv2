@@ -25,6 +25,8 @@ class UnusedMethod:
     start_line: int
     end_line: int
     cyclomatic_complexity: int
+    time_complexity: str
+    tc_line: int
 
 
 @dataclass(frozen=True)
@@ -47,7 +49,21 @@ class TcfMethod:
     end_line: int
     counts: LineCounts
     cyclomatic_complexity: int
+    time_complexity: str
+    tc_line: int
     used_helpers: tuple[HelperRef, ...]
+
+
+@dataclass(frozen=True)
+class DevMethod:
+    """Method data specifically for Developer Analysis (shows all methods)."""
+    name: str
+    file: str
+    start_line: int
+    end_line: int
+    cyclomatic_complexity: int
+    time_complexity: str
+    tc_line: int
 
 
 @dataclass(frozen=True)
@@ -95,3 +111,10 @@ class AnalysisResult:
     unused_methods: tuple[UnusedMethod, ...]
     unused_definitions: tuple[UnusedDefinition, ...]
     warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DevAnalysisResult:
+    """The result of Developer Analysis (all methods across the directory)."""
+    folder: str
+    methods: tuple[DevMethod, ...]

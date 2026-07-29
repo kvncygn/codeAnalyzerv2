@@ -16,7 +16,7 @@ from flask import Flask, Response, abort, jsonify, render_template, request, ses
 
 from .. import __version__
 from ..analyzer_bridge import AnalyzerError
-from ..orchestrator import InvalidFolderError, analyze
+from ..orchestrator import InvalidFolderError, analyze, analyze_dev
 from ..report import build_tree_data, render_json, render_text
 
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
@@ -103,6 +103,14 @@ def create_app() -> Flask:
             folder=state["folder"],
         )
 
+    @app.get("/dev")
+    def dev_index() -> str:
+        state = _load_state()
+        return render_template(
+            "dev.html",
+            folder=state["folder"],
+        )
+
     @app.get("/pick-folder")
     def pick_folder() -> Any:
         """Open a native OS folder picker on this machine and return the chosen path.
@@ -124,6 +132,22 @@ def create_app() -> Flask:
         except Exception:  # noqa: BLE001 - any GUI/Tk failure degrades gracefully
             return jsonify({"path": "", "available": False})
         return jsonify({"path": chosen or "", "available": True})
+
+    @app.post("/dev_analyze")
+    def run_dev_analysis() -> str:
+        folder = (request.form.get("folder") or "").strip()
+        if not folder:
+            return render_template("dev.html", folder="", error="Please enter a folder path.")
+        
+        try:
+            result = analyze_dev(Path(folder))
+        except InvalidFolderError as err:
+            return render_template("dev.html", folder=folder, error=str(err))
+        except AnalyzerError as err:
+            return render_template("dev.html", folder=folder, error=f"C# analyzer error: {err}")
+            
+        _save_state(folder)
+        return render_template("dev_results.html", folder=folder, result=result)
 
     @app.post("/analyze")
     def run_analysis() -> str:

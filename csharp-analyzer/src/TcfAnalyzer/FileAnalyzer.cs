@@ -25,12 +25,16 @@ public static class FileAnalyzer
                 ? HelperResolver.Resolve(model, decl, prefix)
                 : new List<HelperRef>();
 
+            var tcResult = TimeComplexityCalculator.Compute(decl);
+
             methods.Add(new MethodResult(
                 name,
                 isTcf,
                 lineSpan.StartLinePosition.Line,
                 lineSpan.EndLinePosition.Line,
                 ComplexityCalculator.Compute(decl),
+                tcResult.Complexity,
+                tcResult.LineNumber,
                 helpers));
         }
 

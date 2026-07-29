@@ -39,6 +39,14 @@ header h1 { margin: 0; font-size: 1.2rem; letter-spacing: .2px; }
 header h1::before { content: "◧ "; opacity: .7; }
 header .tag { margin: .2rem 0 0; font-size: .82rem; opacity: .75; }
 
+.tabs { margin-top: 1rem; display: flex; gap: 1rem; }
+.tab-link {
+  color: #fff; text-decoration: none; padding: .4rem .8rem;
+  border-radius: 6px; font-size: .9rem; opacity: .7; transition: opacity .2s, background .2s;
+}
+.tab-link:hover { opacity: 1; background: rgba(255,255,255,.1); }
+.tab-link.active { opacity: 1; font-weight: 600; background: rgba(255,255,255,.15); }
+
 main { max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem 3rem; }
 
 /* ---------- Form (index) ---------- */

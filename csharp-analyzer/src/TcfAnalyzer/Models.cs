@@ -31,6 +31,8 @@ public sealed record MethodResult(
     int StartLine,
     int EndLine,
     int CyclomaticComplexity,
+    string TimeComplexity,
+    int TimeComplexityLine,
     List<HelperRef> UsedHelpers);
 
 /// <summary>A helper used by an TCF method: its simple name and defining file.</summary>

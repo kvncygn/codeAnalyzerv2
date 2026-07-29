@@ -18,6 +18,8 @@ from .models import (
     TcfMethod,
     UnusedDefinition,
     UnusedMethod,
+    DevMethod,
+    DevAnalysisResult
 )
 from .scanner import ScanResult, SourceFile, scan, validate_target
 
@@ -38,6 +40,35 @@ def analyze(folder: Path, analyzer_path: Path | None = None) -> AnalysisResult:
         run_analyzer(cs_files, analyzer_path) if cs_files else {"files": []}
     )
     return build_result(folder, scan_result, response)
+
+
+def analyze_dev(folder: Path, analyzer_path: Path | None = None) -> DevAnalysisResult:
+    """Scan *folder*, run the C# analyzer, and build a DevAnalysisResult containing all methods."""
+    error = validate_target(folder)
+    if error is not None:
+        raise InvalidFolderError(error)
+
+    scan_result = scan(folder)
+    cs_files = [f for f in scan_result.files if f.kind.language is Language.CSHARP]
+    response: dict[str, Any] = (
+        run_analyzer(cs_files, analyzer_path) if cs_files else {"files": []}
+    )
+    
+    methods = []
+    for fr in response.get("files", []):
+        rel_path = str(Path(fr.get("path")).relative_to(folder))
+        for method in fr.get("methods", []):
+            methods.append(DevMethod(
+                name=method["name"],
+                file=rel_path,
+                start_line=method["startLine"] + 1,
+                end_line=method["endLine"] + 1,
+                cyclomatic_complexity=method.get("cyclomaticComplexity", 1),
+                time_complexity=method.get("timeComplexity", "O(1)"),
+                tc_line=method.get("timeComplexityLine", method["startLine"] + 1)
+            ))
+            
+    return DevAnalysisResult(folder=str(folder), methods=tuple(methods))
 
 
 def build_result(
@@ -186,6 +217,8 @@ def _analyze_csharp(
                     start_line=start + 1,
                     end_line=end + 1,
                     cyclomatic_complexity=method.get("cyclomaticComplexity", 1),
+                    time_complexity=method.get("timeComplexity", "O(1)"),
+                    tc_line=method.get("timeComplexityLine", start + 1),
                 )
             )
             continue
@@ -202,6 +235,8 @@ def _analyze_csharp(
                 end_line=end + 1,
                 counts=counts_from_flags(flags, start, end + 1),
                 cyclomatic_complexity=method.get("cyclomaticComplexity", 1),
+                time_complexity=method.get("timeComplexity", "O(1)"),
+                tc_line=method.get("timeComplexityLine", start + 1),
                 used_helpers=used,
             )
         )

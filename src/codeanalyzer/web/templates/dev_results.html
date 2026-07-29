@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="toolbar">
+  <a href="{{ url_for('dev_index') }}" class="btn btn-sm btn-ghost">&larr; Back</a>
+  <div class="toolbar-meta">
+    <span class="path">{{ result.folder }}</span>
+    <span class="sep">|</span>
+    <span>{{ result.methods|length }} Methods Analyzed</span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Developer Analysis: Complexity Matrix</h2>
+  <p class="section-desc">
+    This matrix shows the Cyclomatic Complexity (CC) and Time Complexity (TC, Big-O) of every C# method in the directory.
+  </p>
+
+  {% if result.methods %}
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="l th-sort" data-sort="str">Method</th>
+          <th class="l th-sort" data-sort="str">File</th>
+          <th class="n th-sort" data-sort="num">Line</th>
+          <th class="n th-sort" data-sort="num">Cyclomatic Complexity</th>
+          <th class="l th-sort" data-sort="str">Time Complexity</th>
+          <th class="n th-sort" data-sort="num">Deepest Loop Line</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for method in result.methods %}
+        <tr>
+          <td class="l"><span class="method-name">{{ method.name }}</span></td>
+          <td class="l"><span class="muted">{{ method.file }}</span></td>
+          <td class="n">{{ method.start_line }}</td>
+          <td class="n"><span class="badge {% if method.cyclomatic_complexity > 10 %}cx-high{% elif method.cyclomatic_complexity > 5 %}cx-warn{% else %}cx-ok{% endif %}">{{ method.cyclomatic_complexity }}</span></td>
+          <td class="l">
+             <span class="badge {% if method.time_complexity != 'O(1)' and method.time_complexity != 'O(N)' %}cx-high{% elif method.time_complexity == 'O(N)' %}cx-warn{% else %}cx-ok{% endif %}">
+                {{ method.time_complexity }}
+             </span>
+          </td>
+          <td class="n">{% if method.time_complexity != 'O(1)' %}L{{ method.tc_line }}{% else %}-{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No C# methods found in this directory.</p>
+  {% endif %}
+</div>
+{% endblock %}
