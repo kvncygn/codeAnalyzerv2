@@ -338,12 +338,17 @@
 
   // --- Unused Method Summary ---------------------------------------------------
   function unusedRow(m) {
+    var tcClass = m.tc !== 'O(1)' && m.tc !== 'O(N)' ? "cx-high" : (m.tc === 'O(N)' ? "cx-warn" : "cx-ok");
+    var tcBadge = '<span class="badge ' + tcClass + '" title="Time complexity">' + m.tc + '</span>';
+    if (m.tc !== 'O(1)') tcBadge += ' <span class="muted" style="font-size: 0.75rem;">(L' + m.tc_line + ')</span>';
+
     return (
       "<tr>" +
         '<td class="l mono"><span class="chip chip-strong">' + esc(m.name) + "</span></td>" +
         '<td class="l mono muted">' + esc(m.file) + "</td>" +
         '<td class="l mono">' + m.start + "–" + m.end + "</td>" +
         '<td class="n">' + m.cx + "</td>" +
+        '<td class="l">' + tcBadge + "</td>" +
       "</tr>"
     );
   }
@@ -370,9 +375,9 @@
       var ucsv = document.getElementById("unused-csv");
       if (ucsv) {
         ucsv.addEventListener("click", function () {
-          var rows = [["method_name", "defined_in", "start_line", "end_line", "complexity"]];
+          var rows = [["method_name", "defined_in", "start_line", "end_line", "cyclomatic_complexity", "time_complexity"]];
           unused.data.forEach(function (m) {
-            rows.push([m.name, m.file, m.start, m.end, m.cx]);
+            rows.push([m.name, m.file, m.start, m.end, m.cx, m.tc]);
           });
           downloadCsv("unused-methods.csv", rows);
         });
