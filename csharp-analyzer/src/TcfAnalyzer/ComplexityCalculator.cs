@@ -33,6 +33,10 @@ public static class ComplexityCalculator
                 case SyntaxKind.LogicalAndExpression:
                 case SyntaxKind.LogicalOrExpression:
                 case SyntaxKind.CoalesceExpression:
+                case SyntaxKind.CoalesceAssignmentExpression: // ??=
+                case SyntaxKind.ConditionalAccessExpression:  // ?.
+                case SyntaxKind.OrPattern:                    // is A or B
+                case SyntaxKind.AndPattern:                   // is A and B
                     count++;
                     break;
             }

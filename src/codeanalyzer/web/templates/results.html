@@ -53,8 +53,6 @@
   <a class="btn btn-ghost" href="{{ url_for('index') }}">&larr; New analysis</a>
   <div class="toolbar-meta">
     <span class="path" title="{{ result.folder }}">{{ result.folder }}</span>
-    <span class="sep">·</span>
-    <span>prefix <code>{{ result.tcf_prefix }}</code></span>
   </div>
   <button type="button" class="btn" id="download-btn">Download .txt</button>
   <button type="button" class="btn" id="download-json">Download .json</button>
@@ -173,7 +171,7 @@
     {% endif %}
   </div>
   <p class="section-desc">
-    One entry per method whose name starts with <code>{{ result.tcf_prefix }}</code>.
+    One entry per method whose name starts with <code>TCF</code>.
     The green badge counts the project helper functions this method <em>calls</em> —
     those functions are defined elsewhere, not inside the TCF method.
   </p>

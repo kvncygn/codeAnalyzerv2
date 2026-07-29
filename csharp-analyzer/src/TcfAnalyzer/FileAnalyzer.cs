@@ -44,6 +44,31 @@ public static class FileAnalyzer
             if (declaredSymbol.Name == "Main") continue;
             if (declaredSymbol is IMethodSymbol) continue; // Methods are handled separately
 
+            // Skip properties and fields that belong to a record type or a tuple type.
+            // Record positional parameters (e.g. record Foo(string Name)) generate
+            // explicit IPropertySymbol entries that never appear in usedSymbols because
+            // Roslyn resolves constructor calls to the parameter, not the property.
+            // Named tuple elements (e.g. (string Name, string File)) generate IFieldSymbol
+            // entries on the ValueTuple type — these are structural and always "used".
+            if (declaredSymbol is IPropertySymbol or IFieldSymbol)
+            {
+                var containingType = declaredSymbol.ContainingType;
+                if (containingType is { IsRecord: true } or { IsTupleType: true })
+                    continue;
+            }
+
+            // Skip parameters — they are part of method signatures, not project definitions.
+            if (declaredSymbol is IParameterSymbol) continue;
+
+            // Skip local variables and constants declared inside method bodies.
+            // These are temporary/structural and not meaningful project-level definitions.
+            if (declaredSymbol is ILocalSymbol) continue;
+
+            // Skip members defined inside a method body (e.g. local functions' backing
+            // fields, or compiler-generated symbols for lambdas/closures).
+            if (node.Ancestors().Any(a => a is BaseMethodDeclarationSyntax or LocalFunctionStatementSyntax))
+                continue;
+
             if (!usedSymbols.Contains(declaredSymbol.OriginalDefinition))
             {
                 var typeStr = declaredSymbol switch

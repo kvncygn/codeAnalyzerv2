@@ -65,7 +65,7 @@ def find_analyzer(explicit: Path | None = None) -> Path | None:
 
 
 def run_analyzer(
-    cs_files: list[SourceFile], tcf_prefix: str, analyzer_path: Path | None = None
+    cs_files: list[SourceFile], analyzer_path: Path | None = None
 ) -> dict[str, Any]:
     """Run the analyzer over the given C# files and return the parsed JSON response."""
     exe = find_analyzer(analyzer_path)
@@ -76,7 +76,7 @@ def run_analyzer(
         )
 
     request = {
-        "tcfPrefix": tcf_prefix,
+        "tcfPrefix": "TCF",
         "files": [{"path": str(f.path), "text": f.text} for f in cs_files],
     }
     try:

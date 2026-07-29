@@ -26,7 +26,7 @@ class InvalidFolderError(ValueError):
     """Raised when the target folder is missing or not a directory."""
 
 
-def analyze(folder: Path, tcf_prefix: str, analyzer_path: Path | None = None) -> AnalysisResult:
+def analyze(folder: Path, analyzer_path: Path | None = None) -> AnalysisResult:
     """Scan *folder*, run the C# analyzer, and build the merged analysis result."""
     error = validate_target(folder)
     if error is not None:
@@ -35,13 +35,13 @@ def analyze(folder: Path, tcf_prefix: str, analyzer_path: Path | None = None) ->
     scan_result = scan(folder)
     cs_files = [f for f in scan_result.files if f.kind.language is Language.CSHARP]
     response: dict[str, Any] = (
-        run_analyzer(cs_files, tcf_prefix, analyzer_path) if cs_files else {"files": []}
+        run_analyzer(cs_files, analyzer_path) if cs_files else {"files": []}
     )
-    return build_result(folder, tcf_prefix, scan_result, response)
+    return build_result(folder, scan_result, response)
 
 
 def build_result(
-    folder: Path, tcf_prefix: str, scan_result: ScanResult, analyzer_response: dict[str, Any]
+    folder: Path, scan_result: ScanResult, analyzer_response: dict[str, Any]
 ) -> AnalysisResult:
     """Merge scan output, analyzer JSON, and line metrics into an :class:`AnalysisResult`.
 
@@ -139,7 +139,6 @@ def build_result(
 
     return AnalysisResult(
         folder=str(folder),
-        tcf_prefix=tcf_prefix,
         summary=summary,
         files=files,
         tcf_methods=tuple(tcf_methods),

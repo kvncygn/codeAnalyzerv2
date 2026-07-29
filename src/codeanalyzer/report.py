@@ -56,7 +56,6 @@ def render_json(result: AnalysisResult) -> dict[str, Any]:
 
     return {
         "folder": result.folder,
-        "tcf_prefix": result.tcf_prefix,
         "summary": {
             "file_count": s.file_count,
             **counts(c),
@@ -122,7 +121,6 @@ def _project_summary(result: AnalysisResult, out: list[str]) -> None:
     c = s.counts
     out.append("=== Project Summary ===")
     out.append(f"{'Folder':<18}: {result.folder}")
-    out.append(f"{'TCF prefix':<18}: {result.tcf_prefix}")
     rows = (
         ("Source files", s.file_count),
         ("Total lines", c.total),

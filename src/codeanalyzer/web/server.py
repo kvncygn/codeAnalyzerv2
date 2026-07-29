@@ -19,7 +19,6 @@ from ..analyzer_bridge import AnalyzerError
 from ..orchestrator import InvalidFolderError, analyze
 from ..report import build_tree_data, render_json, render_text
 
-DEFAULT_PREFIX = "TCF"
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 # Remember the last folder/prefix across runs. Stored locally in the user's home; never
@@ -33,16 +32,16 @@ def _state_file() -> Path:
 def _load_state() -> dict[str, str]:
     try:
         data = json.loads(_state_file().read_text(encoding="utf-8"))
-        return {"folder": str(data.get("folder", "")), "prefix": str(data.get("prefix", ""))}
+        return {"folder": str(data.get("folder", ""))}
     except (OSError, ValueError):
-        return {"folder": "", "prefix": ""}
+        return {"folder": ""}
 
 
-def _save_state(folder: str, prefix: str) -> None:
+def _save_state(folder: str) -> None:
     try:
         path = _state_file()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"folder": folder, "prefix": prefix}), encoding="utf-8")
+        path.write_text(json.dumps({"folder": folder}), encoding="utf-8")
     except OSError:
         pass  # persistence is a convenience, never fatal
 
@@ -55,7 +54,7 @@ def _slug(value: str) -> str:
 def create_app() -> Flask:
     app = Flask(__name__)
     app.add_template_filter(_slug, "slug")
-    app.jinja_env.globals["app_version"] = __version__
+    app.jinja_env.globals["app_version"] = __version__  # type: ignore
 
     # Local access control. On a shared machine another local user could otherwise reach
     # 127.0.0.1:<port>. We mint a one-time token (printed/opened by __main__); the first
@@ -102,7 +101,6 @@ def create_app() -> Flask:
         return render_template(
             "index.html",
             folder=state["folder"],
-            prefix=state["prefix"] or DEFAULT_PREFIX,
         )
 
     @app.get("/pick-folder")
@@ -130,23 +128,22 @@ def create_app() -> Flask:
     @app.post("/analyze")
     def run_analysis() -> str:
         folder = (request.form.get("folder") or "").strip()
-        prefix = (request.form.get("prefix") or "").strip() or DEFAULT_PREFIX
 
         if not folder:
             return render_template(
-                "index.html", folder="", prefix=prefix, error="Please enter a folder path."
+                "index.html", folder="", error="Please enter a folder path."
             )
 
         try:
-            result = analyze(Path(folder), prefix)
+            result = analyze(Path(folder))
         except InvalidFolderError as err:
-            return render_template("index.html", folder=folder, prefix=prefix, error=str(err))
+            return render_template("index.html", folder=folder, error=str(err))
         except AnalyzerError as err:
             return render_template(
-                "index.html", folder=folder, prefix=prefix, error=f"C# analyzer error: {err}"
+                "index.html", folder=folder, error=f"C# analyzer error: {err}"
             )
 
-        _save_state(folder, prefix)
+        _save_state(folder)
 
         note = None
         if result.summary.file_count == 0:
@@ -210,7 +207,6 @@ def create_app() -> Flask:
         return render_template(
             "results.html",
             folder=folder,
-            prefix=prefix,
             result=result,
             tree=build_tree_data(result.files),
             tcf_data=tcf_data,

@@ -88,7 +88,6 @@ class AnalysisResult:
     """The complete analysis, ready for rendering in the required output order."""
 
     folder: str
-    tcf_prefix: str
     summary: ProjectSummary
     files: tuple[FileReport, ...]
     tcf_methods: tuple[TcfMethod, ...]

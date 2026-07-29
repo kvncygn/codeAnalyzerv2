@@ -35,12 +35,16 @@ public static class ProjectAnalyzer
             foreach (var node in root.DescendantNodes())
             {
                 var symbolInfo = model.GetSymbolInfo(node);
-                if (symbolInfo.Symbol != null)
+                var candidates = symbolInfo.Symbol != null
+                    ? new[] { symbolInfo.Symbol }
+                    : symbolInfo.CandidateSymbols.ToArray();
+
+                foreach (var sym in candidates)
                 {
-                    usedSymbols.Add(symbolInfo.Symbol.OriginalDefinition);
-                    if (symbolInfo.Symbol.ContainingType != null)
+                    usedSymbols.Add(sym.OriginalDefinition);
+                    if (sym.ContainingType != null)
                     {
-                        usedSymbols.Add(symbolInfo.Symbol.ContainingType.OriginalDefinition);
+                        usedSymbols.Add(sym.ContainingType.OriginalDefinition);
                     }
                 }
 

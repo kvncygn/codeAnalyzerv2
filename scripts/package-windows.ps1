@@ -15,9 +15,21 @@ $root = Split-Path -Parent $PSScriptRoot
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $env:DOTNET_NOLOGO = "1"
 
-Write-Host "== Publishing self-contained analyzer (win-x64) =="
+# --- AYAR ---
+# Eger bu degeri $true yaparsaniz, analyzer 77 MB olur ama .NET yuklu olmayan PC'lerde de calisir.
+# Eger bu degeri $false yaparsaniz, analyzer 2-3 MB olur ama ofisteki PC'de .NET 8 yuklu olmalidir.
+$SelfContained = $false
+
+if ($SelfContained) {
+    Write-Host "== Publishing self-contained analyzer (win-x64) =="
+    $scFlag = "true"
+} else {
+    Write-Host "== Publishing framework-dependent analyzer (win-x64) =="
+    $scFlag = "false"
+}
+
 dotnet publish "$root\csharp-analyzer\src\TcfAnalyzer\TcfAnalyzer.csproj" `
-  -c Release -r win-x64 --self-contained true `
+  -c Release -r win-x64 --self-contained $scFlag `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:DebugType=None -p:DebugSymbols=false `
   -o "$root\artifacts\analyzer\win-x64"
