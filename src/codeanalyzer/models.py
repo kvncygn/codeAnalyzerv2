@@ -116,6 +116,31 @@ class AnalysisResult:
 
 @dataclass(frozen=True)
 class DevAnalysisResult:
-    """The result of Developer Analysis (all methods across the directory)."""
+    """The complete result of a Dev Analysis (C/C++) run."""
     folder: str
     methods: tuple[DevMethod, ...]
+
+
+@dataclass(frozen=True)
+class HtmlTestReport:
+    """Represents a parsed HTML test report file and its metrics."""
+    file_name: str
+    total_steps: int
+    passed_steps: int
+    failed_steps: int
+    na_steps: int
+
+
+@dataclass(frozen=True)
+class HtmlVirtualFolder:
+    """A virtual grouping of HTML test reports based on their common prefix."""
+    name: str
+    reports: list[HtmlTestReport]
+
+
+@dataclass(frozen=True)
+class HtmlAnalysisResult:
+    """The result of the HTML test report analysis."""
+    folder: str
+    virtual_folders: list[HtmlVirtualFolder]
+    single_files: list[HtmlTestReport]

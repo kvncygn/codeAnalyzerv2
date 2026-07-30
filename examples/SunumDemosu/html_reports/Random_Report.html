@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Automation Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .header { background: #333; color: #fff; padding: 10px; }
+        .random-table { margin: 20px 0; border-collapse: collapse; }
+        .random-table td { border: 1px solid #ccc; padding: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Automated Test Execution Results</h1>
+        <p>Execution Date: 2026-07-30 15:45:00</p>
+        <p>Environment: Staging (Windows Server 2022)</p>
+    </div>
+
+    <div>
+        <h2>System Health Check</h2>
+        <table class="random-table">
+            <tr><td>CPU Usage</td><td>45%</td></tr>
+            <tr><td>Memory</td><td>8 GB Free</td></tr>
+            <tr><td>Network</td><td>Stable</td></tr>
+        </table>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.</p>
+    </div>
+
+    <!-- The actual targeted table (embedded deeply with random spacing/newlines) -->
+    <div id="test-summary" style="margin-top: 50px;">
+        <h3>Execution Summary</h3>
+        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+            
+            <tr>
+                <th>
+                    Number of Total Steps
+                </th>
+                <td>
+                    <b>
+                        2
+                    </b>
+                </td>
+            </tr>
+
+            <tr>
+                <th>  Number of Passed Steps  </th>
+                <td> <b> 1 </b> </td>
+            </tr>
+            <tr>
+                <th>
+Number of Failed Steps
+</th>
+<td><b>1</b></td>
+            </tr>
+            <tr>
+                <th>Number of N/A Steps</th> <td>   <b> 0 </b>   </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Report generated automatically by CI/CD pipeline.</p>
+        <p>Contact DevOps team for any anomalies in the log structure.</p>
+    </div>
+</body>
+</html>

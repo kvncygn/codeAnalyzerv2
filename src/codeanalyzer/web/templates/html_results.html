@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="panel">
+  <h2>HTML Test Report Analysis</h2>
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-val">{{ result.virtual_folders|length }}</div>
+      <div class="metric-label">Virtual Folders</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">{{ result.single_files|length }}</div>
+      <div class="metric-label">Single Reports</div>
+    </div>
+  </div>
+  <p class="muted">Analysis of HTML test reports found in <code>{{ folder }}</code></p>
+  <a href="{{ url_for('html_index') }}" class="btn">Analyze Another Folder</a>
+</div>
+
+<div class="panel">
+  <h2>Source Tree (Grouped Reports)</h2>
+  <p class="section-desc">
+    Reports sharing the same <code>TCF_..._RC1</code> prefix are grouped into virtual folders.
+  </p>
+  
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="l">Report / Folder</th>
+          <th class="n">Total Steps</th>
+          <th class="n">Passed</th>
+          <th class="n">Failed</th>
+          <th class="n">N/A</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Virtual Folders -->
+        {% for vf in result.virtual_folders %}
+          <tr style="background: #f7f9fc;">
+            <td class="l" colspan="5">
+              <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong> 
+              <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ vf.reports|length }} reports)</span>
+            </td>
+          </tr>
+          {% for report in vf.reports %}
+            <tr>
+              <td class="l" style="padding-left: 2rem;">
+                <span class="file-icon">📄</span> {{ report.file_name }}
+              </td>
+              <td class="n">{{ report.total_steps }}</td>
+              <td class="n"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
+              <td class="n">
+                {% if report.failed_steps > 0 %}
+                  <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
+                {% else %}
+                  {{ report.failed_steps }}
+                {% endif %}
+              </td>
+              <td class="n">{{ report.na_steps }}</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+        
+        <!-- Single Files -->
+        {% if result.single_files %}
+          <tr style="background: #f7f9fc;">
+            <td class="l" colspan="5">
+              <span class="folder-icon">📁</span> <strong>(Ungrouped Reports)</strong>
+            </td>
+          </tr>
+          {% for report in result.single_files %}
+            <tr>
+              <td class="l" style="padding-left: 2rem;">
+                <span class="file-icon">📄</span> {{ report.file_name }}
+              </td>
+              <td class="n">{{ report.total_steps }}</td>
+              <td class="n"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
+              <td class="n">
+                {% if report.failed_steps > 0 %}
+                  <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
+                {% else %}
+                  {{ report.failed_steps }}
+                {% endif %}
+              </td>
+              <td class="n">{{ report.na_steps }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

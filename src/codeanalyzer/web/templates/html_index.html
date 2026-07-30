@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('run_html_analysis') }}" class="card" data-analyze>
+    <label for="html-folder">Folder containing HTML reports</label>
+    <div class="folder-row">
+      <input id="html-folder" type="text" name="folder" value="{{ folder }}"
+             placeholder="C:\path\to\reports" autofocus required>
+      <button type="button" class="btn browse-btn" hidden>Browse…</button>
+    </div>
+
+    <button type="submit">Analyze Reports</button>
+  </form>
+  <p class="hint">
+    Enter an absolute path to the folder containing your <code>.html</code> test reports.
+    Files will be grouped by their <code>TCF_..._RC1</code> prefix.
+  </p>
+{% endblock %}

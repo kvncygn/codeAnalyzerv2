@@ -2,19 +2,16 @@
 {% block content %}
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
   <form method="post" action="{{ url_for('run_analysis') }}" class="card" data-analyze>
-    <label for="folder">Folder path</label>
-    <div class="folder-row">
-      <input id="folder" type="text" name="folder" value="{{ folder }}"
-             placeholder="C:\path\to\source  (or /home/user/src)" autofocus>
-      <button type="button" class="btn" id="browse-btn" hidden>Browse…</button>
-    </div>
-
-
-
-    <button type="submit">Analyze</button>
-  </form>
-  <p class="hint">
-    Enter an absolute path to the folder you want to analyze. Supported files:
-    <code>.cs .c .h .cpp .hpp .cc .cxx .hh</code>.
-  </p>
+      <label for="folder">Folder path</label>
+      <div class="folder-row">
+        <input id="folder" type="text" name="folder" value="{{ folder }}"
+               placeholder="C:\path\to\source  (or /home/user/src)" autofocus>
+        <button type="button" class="btn browse-btn" hidden>Browse…</button>
+      </div>
+      <button type="submit">Analyze</button>
+    </form>
+    <p class="hint">
+      Enter an absolute path to the folder you want to analyze. Supported files:
+      <code>.cs .c .h .cpp .hpp .cc .cxx .hh</code>.
+    </p>
 {% endblock %}

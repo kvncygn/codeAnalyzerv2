@@ -17,6 +17,7 @@ from flask import Flask, Response, abort, jsonify, render_template, request, ses
 from .. import __version__
 from ..analyzer_bridge import AnalyzerError
 from ..orchestrator import InvalidFolderError, analyze, analyze_dev
+from ..html_analyzer import analyze_html_reports
 from ..report import build_tree_data, render_json, render_text
 
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
@@ -111,6 +112,14 @@ def create_app() -> Flask:
             folder=state["folder"],
         )
 
+    @app.get("/html")
+    def html_index() -> str:
+        state = _load_state()
+        return render_template(
+            "html_index.html",
+            folder=state["folder"],
+        )
+
     @app.get("/pick-folder")
     def pick_folder() -> Any:
         """Open a native OS folder picker on this machine and return the chosen path.
@@ -148,6 +157,23 @@ def create_app() -> Flask:
             
         _save_state(folder)
         return render_template("dev_results.html", folder=folder, result=result)
+
+    @app.post("/html_analyze")
+    def run_html_analysis() -> str:
+        folder = (request.form.get("folder") or "").strip()
+        if not folder:
+            return render_template("index.html", folder="", error="Please enter a folder path.")
+        
+        try:
+            folder_path = Path(folder)
+            if not folder_path.is_dir():
+                raise InvalidFolderError(f"'{folder}' is not a valid directory.")
+            result = analyze_html_reports(folder_path)
+        except InvalidFolderError as err:
+            return render_template("index.html", folder=folder, error=str(err))
+            
+        _save_state(folder)
+        return render_template("html_results.html", folder=folder, result=result)
 
     @app.post("/analyze")
     def run_analysis() -> str:

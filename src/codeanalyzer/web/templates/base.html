@@ -11,8 +11,9 @@
     <h1>codeAnalyzer</h1>
     <p class="tag">Local-only static code analyzer &middot; runs entirely on this machine</p>
     <nav class="tabs">
-      <a href="{{ url_for('index') }}" class="tab-link {% if request.endpoint == 'index' %}active{% endif %}">Test Analysis</a>
-      <a href="{{ url_for('dev_index') }}" class="tab-link {% if request.endpoint == 'dev_index' %}active{% endif %}">Developer Analysis</a>
+      <a href="{{ url_for('index') }}" class="tab-link {% if request.endpoint in ('index', 'run_analysis') %}active{% endif %}">Test Code Analysis</a>
+      <a href="{{ url_for('dev_index') }}" class="tab-link {% if request.endpoint in ('dev_index', 'run_dev_analysis') %}active{% endif %}">Development Code Analysis</a>
+      <a href="{{ url_for('html_index') }}" class="tab-link {% if request.endpoint in ('html_index', 'run_html_analysis') %}active{% endif %}">Test Report Analysis</a>
     </nav>
   </header>
   <main>
