@@ -23,15 +23,15 @@ def _sample() -> AnalysisResult:
         FileReport("u.c", "C", Language.C_CPP, LineCounts(8, 5, 2, 0, 1), 0, 0, ()),
     )
     methods = (
-        TcfMethod("TCF_Init", "Program.cs", 1, 4, LineCounts(4, 3, 1, 0, 0), 2,
+        TcfMethod("TCF_Init", "Program.cs", 1, 4, LineCounts(4, 3, 1, 0, 0), 2, "O(1)", 2,
                   (HelperRef("Load", "util/Helpers.cs"),)),
-        TcfMethod("TCF_Run", "Program.cs", 5, 9, LineCounts(5, 3, 1, 1, 0), 3, ()),
+        TcfMethod("TCF_Run", "Program.cs", 5, 9, LineCounts(5, 3, 1, 1, 0), 3, "O(N)", 6, ()),
     )
     usage = (HelperUsage(HelperRef("Load", "util/Helpers.cs"), ("TCF_Init",)),)
-    unused = (UnusedMethod("Orphan", "util/Helpers.cs", 20, 25, 1),)
+    unused = (UnusedMethod("Orphan", "util/Helpers.cs", 20, 25, 1, "O(1)", 21),)
     unused_defs = (UnusedDefinition("MAX_SIZE", "int", 10, "util/Helpers.cs"),)
     summary = ProjectSummary(3, LineCounts(38, 26, 8, 1, 4), 2, 5, 2, 1, 1, 1)
-    return AnalysisResult("/proj", "TCF", summary, files, methods, usage, unused, unused_defs, ("u.c: a warning",))
+    return AnalysisResult("/proj", summary, files, methods, usage, unused, unused_defs, ("u.c: a warning",))
 
 
 def test_sections_are_in_required_order() -> None:

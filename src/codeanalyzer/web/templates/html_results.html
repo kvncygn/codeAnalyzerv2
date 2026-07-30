@@ -23,6 +23,11 @@
     Reports sharing the same <code>TCF_..._RC1</code> prefix are grouped into virtual folders.
   </p>
   
+  <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <span style="font-size: 1.2rem; color: var(--muted);">🔍</span>
+    <input type="text" id="reportSearch" placeholder="Search reports or folders..." style="flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; background: var(--surface);">
+  </div>
+
   <div class="table-wrap">
     <table class="grid">
       <thead>
@@ -37,14 +42,14 @@
       <tbody>
         <!-- Virtual Folders -->
         {% for vf in result.virtual_folders %}
-          <tr style="background: #f7f9fc;">
+          <tr class="folder-row" style="background: #f7f9fc;" data-folder-name="{{ vf.name|lower }}">
             <td class="l" colspan="5">
               <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong> 
               <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ vf.reports|length }} reports)</span>
             </td>
           </tr>
           {% for report in vf.reports %}
-            <tr>
+            <tr class="report-row" data-report-name="{{ report.file_name|lower }}">
               <td class="l" style="padding-left: 2rem;">
                 <span class="file-icon">📄</span> {{ report.file_name }}
               </td>
@@ -72,13 +77,13 @@
         
         <!-- Single Files -->
         {% if result.single_files %}
-          <tr style="background: #f7f9fc;">
+          <tr class="folder-row" style="background: #f7f9fc;" data-folder-name="ungrouped">
             <td class="l" colspan="5">
               <span class="folder-icon">📁</span> <strong>(Ungrouped Reports)</strong>
             </td>
           </tr>
           {% for report in result.single_files %}
-            <tr>
+            <tr class="report-row" data-report-name="{{ report.file_name|lower }}">
               <td class="l" style="padding-left: 2rem;">
                 <span class="file-icon">📄</span> {{ report.file_name }}
               </td>
@@ -107,5 +112,54 @@
     </table>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('reportSearch');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        const tbody = document.querySelector('.grid tbody');
+        if (!tbody) return;
+
+        let currentFolderRow = null;
+        let folderVisibleCount = 0;
+        let folderNameMatches = false;
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            
+            if (row.classList.contains('folder-row')) {
+                // Apply visibility to previous folder before starting new one
+                if (currentFolderRow !== null) {
+                    currentFolderRow.style.display = (folderVisibleCount > 0 || folderNameMatches) ? '' : 'none';
+                }
+                
+                currentFolderRow = row;
+                folderVisibleCount = 0;
+                folderNameMatches = term === '' || row.getAttribute('data-folder-name').includes(term);
+                
+            } else if (row.classList.contains('report-row')) {
+                const reportName = row.getAttribute('data-report-name');
+                // Show report if report name matches OR if the parent folder name matches
+                if (term === '' || reportName.includes(term) || folderNameMatches) {
+                    row.style.display = '';
+                    folderVisibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+        
+        // Apply visibility to the last folder
+        if (currentFolderRow !== null) {
+            currentFolderRow.style.display = (folderVisibleCount > 0 || folderNameMatches) ? '' : 'none';
+        }
+    });
+});
+</script>
 
 {% endblock %}

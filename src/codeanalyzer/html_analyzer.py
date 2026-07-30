@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from dataclasses import dataclass
-from typing import Any
 
 from .models import HtmlTestReport, HtmlVirtualFolder, HtmlAnalysisResult
 
@@ -11,7 +9,7 @@ _TOTAL_RE = re.compile(r"<th>\s*Number of Total Steps\s*</th>\s*<td>\s*<b>\s*(\d
 _PASSED_RE = re.compile(r"<th>\s*Number of Passed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
 _FAILED_RE = re.compile(r"<th>\s*Number of Failed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
 _NA_RE = re.compile(r"<th>\s*Number of N/A Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_FAILED_STEP_RE = re.compile(r"<tr>\s*<td[^>]*>\s*(\d+)\s*</td>(?:(?!<tr>).)*?<td class=\"error\">\s*FAILED\s*</td>", re.DOTALL | re.IGNORECASE)
+_FAILED_STEP_RE = re.compile(r'<tr>\s*<td[^>]*>\s*(\d+)\s*</td>(?:(?!<tr>).)*?<td class="error">\s*FAILED\s*</td>', re.DOTALL | re.IGNORECASE)
 
 
 def extract_metric(pattern: re.Pattern[str], text: str) -> int:

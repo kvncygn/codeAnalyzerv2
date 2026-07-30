@@ -24,8 +24,13 @@ def main():
     ]
     
     # shell=False (varsayılan) bırakıyoruz ki sistem kesinlikle CMD'yi (cmd.exe) açmaya çalışmasın.
-    # Doğrudan dotnet.exe'ye bağlanır.
-    subprocess.run(dotnet_cmd, check=True)
+    # Windows'ta siyah CMD penceresinin anlık bile olsa parlamasını engellemek için:
+    if os.name == 'nt':
+        creationflags = subprocess.CREATE_NO_WINDOW
+    else:
+        creationflags = 0
+        
+    subprocess.run(dotnet_cmd, check=True, creationflags=creationflags)
     
     print("\n== 2. analyzer.exe _bundled klasörüne taşınıyor ==")
     dest_dir = root / "src" / "codeanalyzer" / "_bundled"
@@ -42,17 +47,48 @@ def main():
     print("\n== 3. PyInstaller ile Python uygulaması EXE'ye dönüştürülüyor ==")
     venv_python = root / ".venv" / "Scripts" / "python.exe"
     
-    if not venv_python.exists():
-        print(f"HATA: Sanal ortam bulunamadı! {venv_python}")
-        print("Lütfen önce sanal ortamı (venv) kurun.")
-        return
+    if venv_python.exists():
+        python_exe = str(venv_python)
+        print("✅ Sanal ortam (.venv) bulundu, kullanılıyor...")
+    else:
+        import sys
+        python_exe = sys.executable
+        # IDLE genelde pythonw.exe kullanır, biz arka plan işlemleri için python.exe'ye çevirelim
+        if python_exe.lower().endswith("pythonw.exe"):
+            python_exe = python_exe[:-11] + "python.exe"
+            
+        print(f"⚠️ Sanal ortam (.venv) bulunamadı. Sistem Python'u kullanılıyor: {python_exe}")
+        
+        # PyInstaller'ın yüklü olup olmadığını kontrol et
+        try:
+            subprocess.run([python_exe, "-m", "PyInstaller", "--version"], check=True, capture_output=True, creationflags=creationflags)
+        except Exception:
+            print("\n⏳ PyInstaller bulunamadı, otomatik olarak kuruluyor... Lütfen bekleyin.")
+            try:
+                subprocess.run([python_exe, "-m", "pip", "install", "pyinstaller"], check=True, creationflags=creationflags)
+                print("✅ PyInstaller başarıyla kuruldu! İşleme devam ediliyor...\n")
+            except Exception as e:
+                print(f"\nHATA: PyInstaller otomatik kurulamadı: {e}")
+                print(f"Lütfen komut satırını açıp şu komutu çalıştırın:\n{python_exe} -m pip install pyinstaller\n")
+                return
+
+        # Proje gereksinimlerini (Flask vb.) kontrol et ve kur
+        req_path = root / "requirements.txt"
+        if req_path.exists():
+            print("\n⏳ Proje gereksinimleri (Flask vb.) kontrol ediliyor/kuruluyor... Lütfen bekleyin.")
+            try:
+                subprocess.run([python_exe, "-m", "pip", "install", "-r", str(req_path)], check=True, creationflags=creationflags)
+                print("✅ Gereksinimler başarıyla kuruldu! İşleme devam ediliyor...\n")
+            except Exception as e:
+                print(f"\nHATA: Gereksinimler otomatik kurulamadı: {e}")
+                return
 
     spec_path = root / "packaging" / "codeanalyzer.spec"
-    dist_path = root / "dist"
+    dist_path = Path.home() / "Desktop"
     build_path = root / "build"
     
     pyinstaller_cmd = [
-        str(venv_python), "-m", "PyInstaller",
+        python_exe, "-m", "PyInstaller",
         "--clean", "--noconfirm",
         "--distpath", str(dist_path),
         "--workpath", str(build_path),
@@ -60,7 +96,7 @@ def main():
     ]
     
     # Yine shell=True OLMADAN doğrudan python.exe'yi çalıştırıyoruz. CMD kullanılmaz.
-    subprocess.run(pyinstaller_cmd, check=True)
+    subprocess.run(pyinstaller_cmd, check=True, creationflags=creationflags)
     
     print("\n=======================================================")
     print("BAŞARILI! Uygulama paketlendi.")

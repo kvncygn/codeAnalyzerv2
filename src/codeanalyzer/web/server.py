@@ -162,7 +162,7 @@ def create_app() -> Flask:
     def run_html_analysis() -> str:
         folder = (request.form.get("folder") or "").strip()
         if not folder:
-            return render_template("index.html", folder="", error="Please enter a folder path.")
+            return render_template("html_index.html", folder="", error="Please enter a folder path.")
         
         try:
             folder_path = Path(folder)
@@ -170,7 +170,7 @@ def create_app() -> Flask:
                 raise InvalidFolderError(f"'{folder}' is not a valid directory.")
             result = analyze_html_reports(folder_path)
         except InvalidFolderError as err:
-            return render_template("index.html", folder=folder, error=str(err))
+            return render_template("html_index.html", folder=folder, error=str(err))
             
         _save_state(folder)
         return render_template("html_results.html", folder=folder, result=result)
