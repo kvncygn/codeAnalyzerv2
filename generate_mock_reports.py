@@ -64,6 +64,9 @@ Number of Failed Steps
         </table>
     </div>
 
+    {failed_steps_html}
+
+
     <div class="footer">
         <p>Report generated automatically by CI/CD pipeline.</p>
         <p>Contact DevOps team for any anomalies in the log structure.</p>
@@ -94,7 +97,46 @@ def create_mock_reports():
     
     for filename, total, passed, failed, na in reports:
         filepath = base_dir / filename
-        content = html_template.format(total=total, passed=passed, failed=failed, na=na)
+        
+        failed_steps_html = ""
+        if failed > 0:
+            steps = ""
+            fake_ids = [345, 412, 500, 580, 610]
+            
+            for i in range(failed):
+                step_id = fake_ids[i % len(fake_ids)]
+                steps += f"""
+            <tr>
+            <td>
+            {step_id}
+            </td>
+            <td>
+              <br>............<br>
+            </td>
+            <td>
+              mock_step_{i}
+            </td>
+            <td>
+              == (Mock) (True)
+            </td>
+            <td>
+              (Mock) (False)
+            </td>
+            <td class="error">
+              FAILED
+            </td>
+            </tr>"""
+            
+            failed_steps_html = f"""
+    <div id="detailed-steps" style="margin-top: 30px;">
+        <h3>Detailed Steps</h3>
+        <table border="1" style="border-collapse: collapse;">
+            {steps}
+        </table>
+    </div>
+            """
+            
+        content = html_template.format(total=total, passed=passed, failed=failed, na=na, failed_steps_html=failed_steps_html)
         filepath.write_text(content, encoding="utf-8")
         
     print(f"Mock reports created in: {base_dir.absolute()}")

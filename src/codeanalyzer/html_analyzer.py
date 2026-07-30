@@ -11,6 +11,7 @@ _TOTAL_RE = re.compile(r"<th>\s*Number of Total Steps\s*</th>\s*<td>\s*<b>\s*(\d
 _PASSED_RE = re.compile(r"<th>\s*Number of Passed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
 _FAILED_RE = re.compile(r"<th>\s*Number of Failed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
 _NA_RE = re.compile(r"<th>\s*Number of N/A Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
+_FAILED_STEP_RE = re.compile(r"<tr>\s*<td[^>]*>\s*(\d+)\s*</td>(?:(?!<tr>).)*?<td class=\"error\">\s*FAILED\s*</td>", re.DOTALL | re.IGNORECASE)
 
 
 def extract_metric(pattern: re.Pattern[str], text: str) -> int:
@@ -36,13 +37,22 @@ def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
             failed = extract_metric(_FAILED_RE, content)
             na = extract_metric(_NA_RE, content)
             
+            failed_step_ids: tuple[int, ...] = ()
+            if failed > 0:
+                matches = _FAILED_STEP_RE.findall(content)
+                try:
+                    failed_step_ids = tuple(int(x) for x in matches)
+                except ValueError:
+                    pass
+            
             all_reports.append(
                 HtmlTestReport(
                     file_name=file_path.name,
                     total_steps=total,
                     passed_steps=passed,
                     failed_steps=failed,
-                    na_steps=na
+                    na_steps=na,
+                    failed_step_ids=failed_step_ids
                 )
             )
         except Exception:

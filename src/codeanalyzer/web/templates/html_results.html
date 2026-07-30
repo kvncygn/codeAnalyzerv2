@@ -53,6 +53,14 @@
               <td class="n">
                 {% if report.failed_steps > 0 %}
                   <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
+                  {% if report.failed_step_ids %}
+                    <details style="margin-top: 4px; text-align: right;">
+                      <summary style="font-size: 0.75em; color: var(--muted); cursor: pointer; list-style-type: none; opacity: 0.8;">View Steps ▼</summary>
+                      <div style="font-size: 0.75em; color: var(--danger); max-width: 150px; margin-left: auto; word-wrap: break-word; line-height: 1.4; padding-top: 4px;">
+                        {{ report.failed_step_ids | join(', ') }}
+                      </div>
+                    </details>
+                  {% endif %}
                 {% else %}
                   {{ report.failed_steps }}
                 {% endif %}
@@ -79,6 +87,14 @@
               <td class="n">
                 {% if report.failed_steps > 0 %}
                   <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
+                  {% if report.failed_step_ids %}
+                    <details style="margin-top: 4px; text-align: right;">
+                      <summary style="font-size: 0.75em; color: var(--muted); cursor: pointer; list-style-type: none; opacity: 0.8;">View Steps ▼</summary>
+                      <div style="font-size: 0.75em; color: var(--danger); max-width: 150px; margin-left: auto; word-wrap: break-word; line-height: 1.4; padding-top: 4px;">
+                        {{ report.failed_step_ids | join(', ') }}
+                      </div>
+                    </details>
+                  {% endif %}
                 {% else %}
                   {{ report.failed_steps }}
                 {% endif %}

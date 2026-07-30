@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .filetypes import Language
 from .line_metrics import LineCounts
@@ -129,6 +129,7 @@ class HtmlTestReport:
     passed_steps: int
     failed_steps: int
     na_steps: int
+    failed_step_ids: tuple[int, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
