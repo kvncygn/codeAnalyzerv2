@@ -9,6 +9,7 @@ from .analyzer_bridge import run_analyzer
 from .cpp_comments import find_comment_spans
 from .filetypes import Language
 from .line_metrics import CommentSpan, LineCounts, count, counts_from_flags, line_flags
+from .c_analyzer import analyze_c_files
 from .models import (
     AnalysisResult,
     FileReport,
@@ -49,9 +50,9 @@ def analyze_dev(folder: Path, analyzer_path: Path | None = None) -> DevAnalysisR
         raise InvalidFolderError(error)
 
     scan_result = scan(folder)
-    cs_files = [f for f in scan_result.files if f.kind.language is Language.CSHARP]
+    c_files = [f for f in scan_result.files if f.kind.language is Language.C_CPP]
     response: dict[str, Any] = (
-        run_analyzer(cs_files, analyzer_path) if cs_files else {"files": []}
+        analyze_c_files(c_files) if c_files else {"files": []}
     )
     
     methods = []
