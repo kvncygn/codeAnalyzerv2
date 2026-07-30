@@ -12,6 +12,7 @@ namespace SunumDemosu
         {
             // Proje içi Helper çağrısı
             VeritabaninaKaydet();
+            HesaplaFiyat();
             
             // Başka bir sınıftaki Helper çağrısı
             YardimciAraclar.LogYaz("Sipariş oluşturuldu.");
@@ -50,6 +51,27 @@ namespace SunumDemosu
             // Sınıf kullanımı ("SiparisModeli" sınıfı ve "Id" özelliği USED olarak işaretlenir)
             // Eğer dll bulunamazsa Candidate Symbols sayesinde yine de USED sayılacak.
             var siparis = new SiparisModeli { Id = 1 };
+        }
+
+        // --- Nested Helper Test ---
+        private int HesaplaFiyat()
+        {
+            int baseFiyat = 100;
+            return baseFiyat - GetDiscountRate();
+        }
+
+        private int GetDiscountRate()
+        {
+            int discount = 20;
+            VerifyDiscountLimits(discount);
+            return discount;
+        }
+
+        private void VerifyDiscountLimits(int discount)
+        {
+            if (discount > 50) {
+                Console.WriteLine("İndirim limiti aşıldı!");
+            }
         }
     }
 }

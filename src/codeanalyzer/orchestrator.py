@@ -92,7 +92,9 @@ def build_result(
     # Pass 1: per-file counts/TCF names, plus global TCF methods and helper bookkeeping.
     per_file: list[tuple[SourceFile, LineCounts, list[str]]] = []
     tcf_methods: list[TcfMethod] = []
-    helper_callers: dict[HelperRef, set[str]] = {}
+    tcf_callers: dict[HelperRef, set[str]] = {}
+    helper_called_by_helper: dict[HelperRef, set[str]] = {}
+    helper_dependencies: dict[HelperRef, set[HelperRef]] = {}
     helpers_by_file: dict[str, set[HelperRef]] = {}
     all_non_tcf_methods: list[UnusedMethod] = []
     all_unused_definitions: list[UnusedDefinition] = []
@@ -104,7 +106,7 @@ def build_result(
             csharp_file_count += 1
             counts, names, n_methods, non_tcf, unused_defs = _analyze_csharp(
                 sf, by_path.get(str(sf.path)), warnings, tcf_methods,
-                helper_callers, helpers_by_file, to_rel,
+                tcf_callers, helper_called_by_helper, helper_dependencies, helpers_by_file, to_rel,
             )
             csharp_method_count += n_methods
             all_non_tcf_methods.extend(non_tcf)
@@ -132,25 +134,38 @@ def build_result(
     for file_report in files:
         total_counts = total_counts + file_report.counts
 
+    # Graph traversal to find all transitively used helpers
+    used_helper_set = set(tcf_callers.keys())
+    queue = list(used_helper_set)
+    while queue:
+        curr = queue.pop(0)
+        for child in helper_dependencies.get(curr, []):
+            if child not in used_helper_set:
+                used_helper_set.add(child)
+                queue.append(child)
+
     summary = ProjectSummary(
         file_count=len(files),
         counts=total_counts,
         csharp_file_count=csharp_file_count,
         csharp_method_count=csharp_method_count,
         tcf_method_count=len(tcf_methods),
-        helper_method_count=len(helper_callers),
+        helper_method_count=len(used_helper_set),
         unused_method_count=0, # Will be set below
         unused_definition_count=0, # Will be set below
     )
 
     helper_usage = tuple(
-        HelperUsage(helper, tuple(sorted(callers)))
-        for helper, callers in sorted(
-            helper_callers.items(), key=lambda kv: (kv[0].name, kv[0].file)
+        HelperUsage(
+            helper, 
+            tuple(sorted(tcf_callers.get(helper, set()))),
+            tuple(sorted(helper_called_by_helper.get(helper, set())))
+        )
+        for helper in sorted(
+            used_helper_set, key=lambda h: (h.name, h.file)
         )
     )
 
-    used_helper_set = set(helper_callers.keys())
     unused_methods = tuple(
         sorted(
             (m for m in all_non_tcf_methods if HelperRef(m.name, m.file) not in used_helper_set),
@@ -186,7 +201,9 @@ def _analyze_csharp(
     file_result: dict[str, Any] | None,
     warnings: list[str],
     tcf_methods: list[TcfMethod],
-    helper_callers: dict[HelperRef, set[str]],
+    tcf_callers: dict[HelperRef, set[str]],
+    helper_called_by_helper: dict[HelperRef, set[str]],
+    helper_dependencies: dict[HelperRef, set[HelperRef]],
     helpers_by_file: dict[str, set[HelperRef]],
     to_rel: Any,
 ) -> tuple[LineCounts, list[str], int, list[UnusedMethod], list[UnusedDefinition]]:
@@ -210,6 +227,9 @@ def _analyze_csharp(
     non_tcf_methods: list[UnusedMethod] = []
     for method in methods:
         start, end = method["startLine"], method["endLine"]
+        used = tuple(
+            HelperRef(h["name"], to_rel(h["file"])) for h in method.get("usedHelpers", [])
+        )
         if not method.get("isTcf"):
             non_tcf_methods.append(
                 UnusedMethod(
@@ -222,11 +242,14 @@ def _analyze_csharp(
                     tc_line=method.get("timeComplexityLine", start + 1),
                 )
             )
+            if used:
+                this_helper = HelperRef(method["name"], str(sf.rel_path))
+                helper_dependencies[this_helper] = set(used)
+                for href in used:
+                    helper_called_by_helper.setdefault(href, set()).add(this_helper.name)
+                    helpers_by_file.setdefault(href.file, set()).add(href)
             continue
-        start, end = method["startLine"], method["endLine"]
-        used = tuple(
-            HelperRef(h["name"], to_rel(h["file"])) for h in method.get("usedHelpers", [])
-        )
+            
         tcf_names.append(method["name"])
         tcf_methods.append(
             TcfMethod(
@@ -242,7 +265,7 @@ def _analyze_csharp(
             )
         )
         for href in used:
-            helper_callers.setdefault(href, set()).add(method["name"])
+            tcf_callers.setdefault(href, set()).add(method["name"])
             helpers_by_file.setdefault(href.file, set()).add(href)
 
     unused_defs: list[UnusedDefinition] = []

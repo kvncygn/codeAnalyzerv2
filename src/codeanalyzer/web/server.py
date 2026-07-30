@@ -205,6 +205,7 @@ def create_app() -> Flask:
                 "name": u.helper.name,
                 "file": u.helper.file,
                 "callers": list(u.callers),
+                "helper_callers": list(u.helper_callers),
             }
             for u in result.helper_usage
         ]

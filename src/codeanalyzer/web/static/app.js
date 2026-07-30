@@ -293,12 +293,15 @@
   // --- Helper Usage Summary ----------------------------------------------------
   function helperRow(h) {
     var callers = h.callers.map(function (c) { return '<span class="chip">' + esc(c) + "</span>"; }).join("");
+    var helperCallers = h.helper_callers ? h.helper_callers.map(function (c) { return '<span class="chip">' + esc(c) + "</span>"; }).join("") : "";
+    var count = h.callers.length + (h.helper_callers ? h.helper_callers.length : 0);
     return (
       "<tr>" +
         '<td class="l mono"><span class="chip chip-strong">' + esc(h.name) + "</span></td>" +
         '<td class="l mono muted">' + esc(h.file) + "</td>" +
-        '<td class="n">' + h.callers.length + "</td>" +
+        '<td class="n">' + count + "</td>" +
         '<td class="l">' + callers + "</td>" +
+        '<td class="l">' + helperCallers + "</td>" +
       "</tr>"
     );
   }
@@ -318,7 +321,8 @@
         if (!q) return true;
         return h.name.toLowerCase().indexOf(q) !== -1 ||
                h.file.toLowerCase().indexOf(q) !== -1 ||
-               h.callers.join(" ").toLowerCase().indexOf(q) !== -1;
+               h.callers.join(" ").toLowerCase().indexOf(q) !== -1 ||
+               (h.helper_callers ? h.helper_callers.join(" ").toLowerCase().indexOf(q) !== -1 : false);
       },
     });
     if (helper) {
@@ -326,9 +330,11 @@
       var hcsv = document.getElementById("helper-csv");
       if (hcsv) {
         hcsv.addEventListener("click", function () {
-          var rows = [["helper", "defined_in", "called_by_count", "callers"]];
+          var rows = [["helper", "defined_in", "called_by_count", "tcf_callers", "helper_callers"]];
           helper.data.forEach(function (h) {
-            rows.push([h.name, h.file, h.callers.length, h.callers.join("; ")]);
+            var count = h.callers.length + (h.helper_callers ? h.helper_callers.length : 0);
+            var hCallers = h.helper_callers ? h.helper_callers.join("; ") : "";
+            rows.push([h.name, h.file, count, h.callers.join("; "), hCallers]);
           });
           downloadCsv("helper-usage.csv", rows);
         });

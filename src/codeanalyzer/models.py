@@ -85,6 +85,7 @@ class HelperUsage:
 
     helper: HelperRef
     callers: tuple[str, ...]
+    helper_callers: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

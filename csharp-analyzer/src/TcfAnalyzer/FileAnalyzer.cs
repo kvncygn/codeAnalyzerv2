@@ -21,9 +21,7 @@ public static class FileAnalyzer
             var name = decl.Identifier.ValueText;
             var isTcf = name.StartsWith(prefix, StringComparison.Ordinal);
             var lineSpan = tree.GetLineSpan(decl.Span);
-            var helpers = isTcf
-                ? HelperResolver.Resolve(model, decl, prefix)
-                : new List<HelperRef>();
+            var helpers = HelperResolver.Resolve(model, decl, prefix);
 
             var tcResult = TimeComplexityCalculator.Compute(decl);
 

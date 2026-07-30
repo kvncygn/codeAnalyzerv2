@@ -211,10 +211,9 @@
     </div>
     {% endif %}
   </div>
-  <p class="section-desc">
-    Project helper functions — non-TCF methods that at least one TCF method calls — and
-    exactly which TCF methods call each one.
-  </p>
+        <p class="muted">
+          Project helper functions &mdash; non-TCF methods that are called by at least one TCF method (directly or indirectly via other helpers) &mdash; and exactly which TCF and Helper methods call each one.
+        </p>
   {% if helper_data %}
     <div class="pager" hidden>
       <button type="button" class="btn btn-sm pg-prev">&larr; Prev</button>
@@ -228,7 +227,8 @@
             <th class="l">Helper function</th>
             <th class="l">Defined in</th>
             <th class="n">Called by</th>
-            <th class="l">TCF methods that call it</th>
+            <th class="l">Called by TCF Methods</th>
+            <th class="l">Called by Helper Methods</th>
           </tr>
         </thead>
         <tbody id="helper-list"></tbody>
