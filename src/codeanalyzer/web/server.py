@@ -112,6 +112,17 @@ def create_app() -> Flask:
             folder=state["folder"],
         )
 
+    @app.get("/view-report")
+    def view_report() -> Any:
+        path_str = request.args.get("path")
+        if not path_str:
+            abort(404)
+        path = Path(path_str)
+        if not path.is_file() or path.suffix.lower() != '.html':
+            abort(404)
+        from flask import send_file
+        return send_file(str(path))
+
     @app.get("/html")
     def html_index() -> str:
         state = _load_state()
