@@ -260,10 +260,10 @@
       if (csv) {
         csv.addEventListener("click", function () {
           var rows = [["method", "file", "start", "end", "total", "code", "comment",
-                       "inline", "blank", "comment_ratio", "complexity", "helpers"]];
+                       "inline", "blank", "comment_ratio", "cyclomatic_complexity", "time_complexity", "tc_line", "helpers"]];
           tcf.data.forEach(function (m) {
             rows.push([m.name, m.file, m.start, m.end, m.total, m.code, m.comment,
-                       m.inline, m.blank, m.ratio, m.cx, m.helpers.join("; ")]);
+                       m.inline, m.blank, m.ratio, m.cx, m.tc, m.tc_line, m.helpers.join("; ")]);
           });
           downloadCsv("tcf-methods.csv", rows);
         });

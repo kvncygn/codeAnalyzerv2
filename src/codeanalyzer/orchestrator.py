@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from pathlib import Path
 from typing import Any
 
@@ -136,9 +137,9 @@ def build_result(
 
     # Graph traversal to find all transitively used helpers
     used_helper_set = set(tcf_callers.keys())
-    queue = list(used_helper_set)
+    queue = deque(used_helper_set)
     while queue:
-        curr = queue.pop(0)
+        curr = queue.popleft()
         for child in helper_dependencies.get(curr, []):
             if child not in used_helper_set:
                 used_helper_set.add(child)

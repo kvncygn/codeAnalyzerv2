@@ -117,9 +117,18 @@ def create_app() -> Flask:
         path_str = request.args.get("path")
         if not path_str:
             abort(404)
-        path = Path(path_str)
+        path = Path(path_str).resolve()
         if not path.is_file() or path.suffix.lower() != '.html':
             abort(404)
+
+        # Path Traversal Protection: ensure the file is within the analyzed folder
+        state = _load_state()
+        if state.get("folder"):
+            base_folder = Path(state["folder"]).resolve()
+            try:
+                path.relative_to(base_folder)
+            except ValueError:
+                abort(403)
         from flask import send_file
         return send_file(str(path))
 

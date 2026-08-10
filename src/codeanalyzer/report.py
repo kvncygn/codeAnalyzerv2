@@ -85,12 +85,14 @@ def render_json(result: AnalysisResult) -> dict[str, Any]:
                 "end_line": m.end_line,
                 "counts": counts(m.counts),
                 "cyclomatic_complexity": m.cyclomatic_complexity,
+                "time_complexity": m.time_complexity,
+                "time_complexity_line": m.tc_line,
                 "used_helpers": [h.name for h in m.used_helpers],
             }
             for m in sorted(result.tcf_methods, key=lambda hm: (hm.file, hm.start_line))
         ],
         "helper_usage": [
-            {"name": u.helper.name, "file": u.helper.file, "callers": list(u.callers)}
+            {"name": u.helper.name, "file": u.helper.file, "callers": list(u.callers), "helper_callers": list(u.helper_callers)}
             for u in result.helper_usage
         ],
         "unused_methods": [
