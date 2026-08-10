@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .models import HtmlTestReport, HtmlVirtualFolder, HtmlAnalysisResult
+from .models import HtmlTestReport, HtmlSubFolder, HtmlVirtualFolder, HtmlAnalysisResult
 
 _TOTAL_RE = re.compile(r"<th>\s*Number of Total Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
 _PASSED_RE = re.compile(r"<th>\s*Number of Passed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
@@ -28,13 +28,21 @@ def extract_metric(pattern: re.Pattern[str], text: str) -> int:
 
 def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
     """Scan the given folder for .html files and group them into virtual folders."""
-    all_reports: list[HtmlTestReport] = []
+    all_reports: list[tuple[HtmlTestReport, str, str]] = []
+    index_report = None
+    TAGS = ["SCA_WINDOWS", "MANUAL", "SCA_MANUAL", "WINDOWS"]
     
     for file_path in folder.rglob("*.html"):
+        name = file_path.name
+        
+        # Only process index.html and files starting with TC
+        if name.lower() != "index.html" and not name.startswith("TC"):
+            continue
+            
         try:
             content = file_path.read_text(encoding="utf-8", errors="ignore")
             
-            if file_path.name.lower() == "index.html":
+            if name.lower() == "index.html":
                 m_total = _IDX_TOTAL_RE.search(content)
                 total = int(m_total.group(1)) if m_total else 0
                 
@@ -65,56 +73,63 @@ def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
                 except ValueError:
                     pass
             
-            all_reports.append(
-                HtmlTestReport(
-                    file_name=file_path.name,
-                    absolute_path=str(file_path.absolute()),
-                    total_steps=total,
-                    passed_steps=passed,
-                    failed_steps=failed,
-                    na_steps=na,
-                    failed_incomplete_steps=failed_inc,
-                    failed_step_ids=failed_step_ids,
-                    passed_pct=passed_pct,
-                    failed_pct=failed_pct
-                )
+            report = HtmlTestReport(
+                file_name=name,
+                absolute_path=str(file_path.absolute()),
+                total_steps=total,
+                passed_steps=passed,
+                failed_steps=failed,
+                na_steps=na,
+                failed_incomplete_steps=failed_inc,
+                failed_step_ids=failed_step_ids,
+                passed_pct=passed_pct,
+                failed_pct=failed_pct
             )
+            
+            if name.lower() == "index.html":
+                index_report = report
+            else:
+                # Find the first occurring tag
+                tag_positions = {}
+                for tag in TAGS:
+                    idx = name.find(tag)
+                    if idx != -1:
+                        tag_positions[tag] = idx
+                if not tag_positions:
+                    continue
+                first_tag = min(tag_positions.keys(), key=lambda k: tag_positions[k])
+                
+                # Extract TCF...RC1 base folder name
+                idx_tcf = name.find("TCF")
+                idx_rc1 = name.find("RC1")
+                if idx_tcf != -1 and idx_rc1 != -1 and idx_rc1 > idx_tcf:
+                    base_folder = name[idx_tcf:idx_rc1 + 3]
+                    all_reports.append((report, base_folder, first_tag))
+                
         except Exception:
             continue
             
     # Grouping logic
-    # Find prefixes like TCF_..._RC1
-    prefix_map: dict[str, list[HtmlTestReport]] = {}
-    single_files: list[HtmlTestReport] = []
+    # folders_map[base_folder][tag] = [reports...]
+    folders_map: dict[str, dict[str, list[HtmlTestReport]]] = {}
     
-    index_report = None
-    
-    for report in all_reports:
-        name = report.file_name
-        if name.lower() == "index.html":
-            index_report = report
-            continue
-            
-        if name.startswith("TCF") and "RC1" in name:
-            idx = name.find("RC1")
-            prefix = name[:idx + 3] # Include "RC1"
-            prefix_map.setdefault(prefix, []).append(report)
-        else:
-            single_files.append(report)
-            
+    for report, base_folder, tag in all_reports:
+        if base_folder not in folders_map:
+            folders_map[base_folder] = {t: [] for t in TAGS}
+        folders_map[base_folder][tag].append(report)
+        
     virtual_folders: list[HtmlVirtualFolder] = []
     
-    for prefix, reports in prefix_map.items():
-        virtual_folders.append(
-            HtmlVirtualFolder(
-                name=prefix,
-                reports=sorted(reports, key=lambda r: r.file_name)
-            )
-        )
+    for bf_name, tag_map in folders_map.items():
+        subfolders = []
+        # Create subfolders for all tags even if empty, as requested
+        for tag in TAGS:
+            sorted_reports = sorted(tag_map[tag], key=lambda r: r.file_name)
+            subfolders.append(HtmlSubFolder(name=tag, reports=sorted_reports))
+        virtual_folders.append(HtmlVirtualFolder(name=bf_name, subfolders=subfolders))
             
     return HtmlAnalysisResult(
         folder=str(folder),
         virtual_folders=sorted(virtual_folders, key=lambda v: v.name),
-        single_files=sorted(single_files, key=lambda r: r.file_name),
         index_report=index_report
     )

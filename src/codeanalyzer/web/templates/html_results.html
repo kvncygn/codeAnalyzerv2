@@ -5,14 +5,6 @@
   <h2>HTML Test Report Analysis</h2>
   <div class="stats" style="margin-top: 1rem; margin-bottom: 1.5rem;">
     <div class="stat">
-      <span class="stat-num">{{ result.virtual_folders|length }}</span>
-      <span class="stat-label">Virtual Folders</span>
-    </div>
-    <div class="stat">
-      <span class="stat-num">{{ result.single_files|length }}</span>
-      <span class="stat-label">Single Reports</span>
-    </div>
-    <div class="stat">
       <span class="stat-num">{{ result.total_steps }}</span>
       <span class="stat-label">Total Steps</span>
     </div>
@@ -28,19 +20,81 @@
       <span class="stat-num" style="color: var(--amber);">{{ result.failed_incomplete_steps }}</span>
       <span class="stat-label">Failed (Inc)</span>
     </div>
-    <div class="stat">
-      <span class="stat-num">{{ result.na_steps }}</span>
-      <span class="stat-label">N/A</span>
-    </div>
   </div>
   <p class="muted">Analysis of HTML test reports found in <code>{{ folder }}</code></p>
   <a href="{{ url_for('html_index') }}" class="btn">Analyze Another Folder</a>
 </div>
 
+{% set inc_vfs = result.virtual_folders | selectattr("failed_incomplete_steps", ">", 0) | list %}
+{% set idx_has_inc = result.index_report and result.index_report.failed_incomplete_steps > 0 %}
+
+{% if idx_has_inc or inc_vfs %}
+<div class="panel" style="border-left: 4px solid var(--amber);">
+  <h2 style="color: var(--amber);">Critical: Failed (Incomplete) Reports</h2>
+  <p class="section-desc">
+    The following reports contain incomplete failures and require immediate attention.
+  </p>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="l">Report / Folder</th>
+          <th style="text-align: center;">Failed (Inc) Steps</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if idx_has_inc %}
+          <tr class="report-row" style="background: #eef2f6;" data-report-name="index.html">
+            <td class="l">
+              <span class="file-icon" style="margin-right:4px;">🌐</span> 
+              <a href="{{ url_for('view_report', path=result.index_report.absolute_path) }}" target="_blank" style="font-weight: bold; text-decoration: none; color: var(--primary);">{{ result.index_report.file_name }}</a>
+              <span class="muted" style="margin-left: 8px; font-size: 0.9em;">(Main Dashboard)</span>
+            </td>
+            <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ result.index_report.failed_incomplete_steps }}</td>
+          </tr>
+        {% endif %}
+
+        {% for vf in inc_vfs %}
+          <tr class="group-row" style="background: #fff8e6; cursor: pointer; user-select: none;" data-folder-name="{{ vf.name|lower }}">
+            <td class="l">
+              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+              <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong>
+            </td>
+            <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ vf.failed_incomplete_steps }}</td>
+          </tr>
+          
+          {% for sub in vf.subfolders %}
+            {% if sub.failed_incomplete_steps > 0 %}
+              <tr class="subfolder-row" style="background: #fdfaf3; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
+                <td class="l" style="padding-left: 2rem;">
+                  <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+                  <span class="folder-icon">📁</span> <strong>{{ sub.name }}</strong>
+                </td>
+                <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ sub.failed_incomplete_steps }}</td>
+              </tr>
+              {% for report in sub.reports %}
+                {% if report.failed_incomplete_steps > 0 %}
+                  <tr class="report-row" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}" data-report-name="{{ report.file_name|lower }}">
+                    <td class="l" style="padding-left: 4rem;">
+                      <span class="file-icon">📄</span> {{ report.file_name }}
+                    </td>
+                    <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ report.failed_incomplete_steps }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 <div class="panel">
   <h2>Source Tree (Grouped Reports)</h2>
   <p class="section-desc">
-    Reports sharing the same <code>TCF_..._RC1</code> prefix are grouped into virtual folders.
+    Reports are grouped by their <code>TCF_..._RC1</code> base name, and categorized into subfolders based on tags.
   </p>
   
   <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -56,7 +110,6 @@
           <th style="text-align: center;">Total Steps</th>
           <th style="text-align: center;">Passed</th>
           <th style="text-align: center;">Failed</th>
-          <th style="text-align: center;">Failed (Inc)</th>
           <th style="text-align: center;">N/A</th>
         </tr>
       </thead>
@@ -82,7 +135,6 @@
                 <span style="font-size: 0.85em; opacity: 0.8;">{{ result.index_report.failed_pct }}</span>
               {% endif %}
             </td>
-            <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ result.index_report.failed_incomplete_steps }}</td>
             <td style="text-align: center; font-weight: bold;">{{ result.index_report.na_steps }}</td>
           </tr>
         {% endif %}
@@ -93,100 +145,52 @@
             <td class="l">
               <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
               <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong> 
-              <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ vf.reports|length }} reports)</span>
             </td>
             <td style="text-align: center; font-weight: bold;">{{ vf.total_steps }}</td>
             <td style="text-align: center; font-weight: bold; color: var(--success);">{{ vf.passed_steps }}</td>
             <td style="text-align: center; font-weight: bold; color: var(--danger);">{{ vf.failed_steps }}</td>
-            <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ vf.failed_incomplete_steps }}</td>
             <td style="text-align: center; font-weight: bold;">{{ vf.na_steps }}</td>
           </tr>
-          {% for report in vf.reports %}
-            <tr class="report-row" data-report-name="{{ report.file_name|lower }}">
+          
+          {% for sub in vf.subfolders %}
+            <tr class="subfolder-row" style="background: #fcfdfe; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
               <td class="l" style="padding-left: 2rem;">
-                <span class="file-icon">📄</span> {{ report.file_name }}
+                <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+                <span class="folder-icon">📁</span> <strong>{{ sub.name }}</strong>
+                <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ sub.reports|length }} reports)</span>
               </td>
-              <td style="text-align: center;">{{ report.total_steps }}</td>
-              <td style="text-align: center;"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
-              <td style="text-align: center;">
-                {% if report.failed_steps > 0 %}
-                  <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
-                  {% if report.failed_step_ids %}
-                    <details style="margin-top: 4px; text-align: right;">
-                      <summary style="font-size: 0.75em; color: var(--muted); cursor: pointer; list-style-type: none; opacity: 0.8;">View Steps ▼</summary>
-                      <div style="font-size: 0.75em; color: var(--danger); max-width: 150px; margin-left: auto; word-wrap: break-word; line-height: 1.4; padding-top: 4px;">
-                        {{ report.failed_step_ids | join(', ') }}
-                      </div>
-                    </details>
-                  {% endif %}
-                {% else %}
-                  {{ report.failed_steps }}
-                {% endif %}
-              </td>
-              <td style="text-align: center;">
-                {% if report.failed_incomplete_steps > 0 %}
-                  <span style="color: var(--amber); font-weight: bold;">{{ report.failed_incomplete_steps }}</span>
-                {% else %}
-                  {{ report.failed_incomplete_steps }}
-                {% endif %}
-              </td>
-              <td style="text-align: center;">{{ report.na_steps }}</td>
+              <td style="text-align: center; font-weight: bold;">{{ sub.total_steps }}</td>
+              <td style="text-align: center; font-weight: bold; color: var(--success);">{{ sub.passed_steps }}</td>
+              <td style="text-align: center; font-weight: bold; color: var(--danger);">{{ sub.failed_steps }}</td>
+              <td style="text-align: center; font-weight: bold;">{{ sub.na_steps }}</td>
             </tr>
+            {% for report in sub.reports %}
+              <tr class="report-row" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}" data-report-name="{{ report.file_name|lower }}">
+                <td class="l" style="padding-left: 4rem;">
+                  <span class="file-icon">📄</span> {{ report.file_name }}
+                </td>
+                <td style="text-align: center;">{{ report.total_steps }}</td>
+                <td style="text-align: center;"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
+                <td style="text-align: center;">
+                  {% if report.failed_steps > 0 %}
+                    <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
+                    {% if report.failed_step_ids %}
+                      <details style="margin-top: 4px; text-align: right;">
+                        <summary style="font-size: 0.75em; color: var(--muted); cursor: pointer; list-style-type: none; opacity: 0.8;">View Steps ▼</summary>
+                        <div style="font-size: 0.75em; color: var(--danger); max-width: 150px; margin-left: auto; word-wrap: break-word; line-height: 1.4; padding-top: 4px;">
+                          {{ report.failed_step_ids | join(', ') }}
+                        </div>
+                      </details>
+                    {% endif %}
+                  {% else %}
+                    {{ report.failed_steps }}
+                  {% endif %}
+                </td>
+                <td style="text-align: center;">{{ report.na_steps }}</td>
+              </tr>
+            {% endfor %}
           {% endfor %}
         {% endfor %}
-        
-        <!-- Single Files -->
-        {% if result.single_files %}
-          {% set ungrouped_total = result.single_files | sum(attribute='total_steps') %}
-          {% set ungrouped_passed = result.single_files | sum(attribute='passed_steps') %}
-          {% set ungrouped_failed = result.single_files | sum(attribute='failed_steps') %}
-          {% set ungrouped_failed_inc = result.single_files | sum(attribute='failed_incomplete_steps') %}
-          {% set ungrouped_na = result.single_files | sum(attribute='na_steps') %}
-          <tr class="group-row" style="background: #f7f9fc; cursor: pointer; user-select: none;" data-folder-name="ungrouped">
-            <td class="l">
-              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
-              <span class="folder-icon">📁</span> <strong>(Ungrouped Reports)</strong>
-              <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ result.single_files|length }} reports)</span>
-            </td>
-            <td style="text-align: center; font-weight: bold;">{{ ungrouped_total }}</td>
-            <td style="text-align: center; font-weight: bold; color: var(--success);">{{ ungrouped_passed }}</td>
-            <td style="text-align: center; font-weight: bold; color: var(--danger);">{{ ungrouped_failed }}</td>
-            <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ ungrouped_failed_inc }}</td>
-            <td style="text-align: center; font-weight: bold;">{{ ungrouped_na }}</td>
-          </tr>
-          {% for report in result.single_files %}
-            <tr class="report-row" data-report-name="{{ report.file_name|lower }}">
-              <td class="l" style="padding-left: 2rem;">
-                <span class="file-icon">📄</span> {{ report.file_name }}
-              </td>
-              <td style="text-align: center;">{{ report.total_steps }}</td>
-              <td style="text-align: center;"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
-              <td style="text-align: center;">
-                {% if report.failed_steps > 0 %}
-                  <span style="color: var(--danger); font-weight: bold;">{{ report.failed_steps }}</span>
-                  {% if report.failed_step_ids %}
-                    <details style="margin-top: 4px; text-align: right;">
-                      <summary style="font-size: 0.75em; color: var(--muted); cursor: pointer; list-style-type: none; opacity: 0.8;">View Steps ▼</summary>
-                      <div style="font-size: 0.75em; color: var(--danger); max-width: 150px; margin-left: auto; word-wrap: break-word; line-height: 1.4; padding-top: 4px;">
-                        {{ report.failed_step_ids | join(', ') }}
-                      </div>
-                    </details>
-                  {% endif %}
-                {% else %}
-                  {{ report.failed_steps }}
-                {% endif %}
-              </td>
-              <td style="text-align: center;">
-                {% if report.failed_incomplete_steps > 0 %}
-                  <span style="color: var(--amber); font-weight: bold;">{{ report.failed_incomplete_steps }}</span>
-                {% else %}
-                  {{ report.failed_incomplete_steps }}
-                {% endif %}
-              </td>
-              <td style="text-align: center;">{{ report.na_steps }}</td>
-            </tr>
-          {% endfor %}
-        {% endif %}
       </tbody>
     </table>
   </div>
@@ -195,50 +199,114 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('reportSearch');
-    const tbody = document.querySelector('.grid tbody');
-    if (!tbody) return;
+    const tbodies = document.querySelectorAll('.grid tbody');
+    if (!tbodies.length) return;
 
     function applyFilter() {
         const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        let currentFolderRow = null;
-        let folderVisibleCount = 0;
-        let folderNameMatches = false;
-        let isFolderCollapsed = false;
-
-        const rows = Array.from(tbody.querySelectorAll('tr'));
         
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
+        tbodies.forEach(tbody => {
+            let currentGroupRow = null;
+            let currentSubRow = null;
             
-            if (row.classList.contains('group-row')) {
-                if (currentFolderRow !== null) {
-                    currentFolderRow.style.display = (folderVisibleCount > 0 || folderNameMatches) ? '' : 'none';
-                }
+            let isGroupCollapsed = false;
+            let isSubCollapsed = false;
+
+            let groupNameMatches = false;
+            let subNameMatches = false;
+            
+            let groupVisibleCount = 0;
+            let subVisibleCount = 0;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
                 
-                currentFolderRow = row;
-                folderVisibleCount = 0;
-                folderNameMatches = term === '' || row.getAttribute('data-folder-name').includes(term);
-                isFolderCollapsed = row.classList.contains('collapsed');
-                
-            } else if (row.classList.contains('report-row')) {
-                const reportName = row.getAttribute('data-report-name');
-                const matchesSearch = term === '' || reportName.includes(term) || folderNameMatches;
-                
-                if (matchesSearch && !isFolderCollapsed) {
-                    row.style.display = '';
-                    folderVisibleCount++;
-                } else if (matchesSearch && isFolderCollapsed) {
-                    row.style.display = 'none'; // hidden by collapse, but counts for folder visibility
-                    folderVisibleCount++;
-                } else {
-                    row.style.display = 'none';
+                if (row.classList.contains('group-row')) {
+                    // Finalize previous sub
+                    if (currentSubRow !== null) {
+                        const showSub = (subVisibleCount > 0 || subNameMatches) && !isGroupCollapsed;
+                        currentSubRow.style.display = showSub ? '' : 'none';
+                        if (showSub) {
+                            groupVisibleCount++;
+                        }
+                    }
+
+                    // Finalize previous group
+                    if (currentGroupRow !== null) {
+                        currentGroupRow.style.display = (groupVisibleCount > 0 || groupNameMatches) ? '' : 'none';
+                    }
+                    
+                    currentGroupRow = row;
+                    groupVisibleCount = 0;
+                    groupNameMatches = term === '' || row.getAttribute('data-folder-name').includes(term);
+                    isGroupCollapsed = row.classList.contains('collapsed');
+                    
+                    // Reset sub row states
+                    currentSubRow = null;
+                    isSubCollapsed = false;
+                    subNameMatches = false;
+                    subVisibleCount = 0;
+                    
+                } else if (row.classList.contains('subfolder-row')) {
+                    // Finalize previous sub
+                    if (currentSubRow !== null) {
+                        const showSub = (subVisibleCount > 0 || subNameMatches) && !isGroupCollapsed;
+                        currentSubRow.style.display = showSub ? '' : 'none';
+                        if (showSub) {
+                            groupVisibleCount++;
+                        }
+                    }
+                    
+                    currentSubRow = row;
+                    subVisibleCount = 0;
+                    const folderName = row.getAttribute('data-parent-folder') || '';
+                    const subName = row.getAttribute('data-sub-name') || '';
+                    subNameMatches = term === '' || subName.includes(term) || folderName.includes(term);
+                    isSubCollapsed = row.classList.contains('collapsed');
+                    
+                } else if (row.classList.contains('report-row')) {
+                    const reportName = row.getAttribute('data-report-name') || '';
+                    const isIndex = reportName === 'index.html';
+                    
+                    if (isIndex) {
+                         const matchesSearch = term === '' || reportName.includes(term);
+                         row.style.display = matchesSearch ? '' : 'none';
+                         continue;
+                    }
+                    
+                    const parentFolder = row.getAttribute('data-parent-folder') || '';
+                    const subName = row.getAttribute('data-sub-name') || '';
+                    
+                    const matchesSearch = term === '' || reportName.includes(term) || parentFolder.includes(term) || subName.includes(term);
+                    
+                    if (matchesSearch && !isGroupCollapsed && !isSubCollapsed) {
+                        row.style.display = '';
+                        subVisibleCount++;
+                    } else if (matchesSearch) {
+                        row.style.display = 'none'; // hidden by collapse, but counts for visibility
+                        subVisibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
                 }
             }
-        }
-        
-        if (currentFolderRow !== null) {
-            currentFolderRow.style.display = (folderVisibleCount > 0 || folderNameMatches) ? '' : 'none';
-        }
+            
+            // Finalize last sub
+            if (currentSubRow !== null) {
+                const showSub = (subVisibleCount > 0 || subNameMatches) && !isGroupCollapsed;
+                currentSubRow.style.display = showSub ? '' : 'none';
+                if (showSub) {
+                    groupVisibleCount++;
+                }
+            }
+            
+            // Finalize last group
+            if (currentGroupRow !== null) {
+                currentGroupRow.style.display = (groupVisibleCount > 0 || groupNameMatches) ? '' : 'none';
+            }
+        });
     }
 
     if (searchInput) {
@@ -246,16 +314,23 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Collapse logic
-    tbody.addEventListener('click', function(e) {
-        const folderRow = e.target.closest('.group-row');
-        if (!folderRow) return;
-        
-        const isCollapsed = folderRow.classList.toggle('collapsed');
-        const icon = folderRow.querySelector('.toggle-icon');
-        if (icon) {
-            icon.textContent = isCollapsed ? '▶' : '▼';
-        }
-        applyFilter();
+    tbodies.forEach(tbody => {
+        tbody.addEventListener('click', function(e) {
+            const groupRow = e.target.closest('.group-row');
+            const subfolderRow = e.target.closest('.subfolder-row');
+            
+            if (groupRow) {
+                const isCollapsed = groupRow.classList.toggle('collapsed');
+                const icon = groupRow.querySelector('.toggle-icon');
+                if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+                applyFilter();
+            } else if (subfolderRow) {
+                const isCollapsed = subfolderRow.classList.toggle('collapsed');
+                const icon = subfolderRow.querySelector('.toggle-icon');
+                if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+                applyFilter();
+            }
+        });
     });
 });
 </script>

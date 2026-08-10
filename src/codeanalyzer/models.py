@@ -137,8 +137,8 @@ class HtmlTestReport:
 
 
 @dataclass(frozen=True)
-class HtmlVirtualFolder:
-    """A virtual grouping of HTML test reports based on their common prefix."""
+class HtmlSubFolder:
+    """A sub-folder categorization based on specific tags."""
     name: str
     reports: list[HtmlTestReport]
 
@@ -164,29 +164,55 @@ class HtmlVirtualFolder:
 
 
 @dataclass(frozen=True)
+class HtmlVirtualFolder:
+    """A virtual grouping of HTML test reports based on their common prefix."""
+    name: str
+    subfolders: list[HtmlSubFolder]
+
+    @property
+    def total_steps(self) -> int:
+        return sum(s.total_steps for s in self.subfolders)
+
+    @property
+    def passed_steps(self) -> int:
+        return sum(s.passed_steps for s in self.subfolders)
+
+    @property
+    def failed_steps(self) -> int:
+        return sum(s.failed_steps for s in self.subfolders)
+
+    @property
+    def na_steps(self) -> int:
+        return sum(s.na_steps for s in self.subfolders)
+
+    @property
+    def failed_incomplete_steps(self) -> int:
+        return sum(s.failed_incomplete_steps for s in self.subfolders)
+
+
+@dataclass(frozen=True)
 class HtmlAnalysisResult:
     """The result of the HTML test report analysis."""
     folder: str
     virtual_folders: list[HtmlVirtualFolder]
-    single_files: list[HtmlTestReport]
     index_report: HtmlTestReport | None = None
 
     @property
     def total_steps(self) -> int:
-        return sum(vf.total_steps for vf in self.virtual_folders) + sum(r.total_steps for r in self.single_files)
+        return sum(vf.total_steps for vf in self.virtual_folders)
 
     @property
     def passed_steps(self) -> int:
-        return sum(vf.passed_steps for vf in self.virtual_folders) + sum(r.passed_steps for r in self.single_files)
+        return sum(vf.passed_steps for vf in self.virtual_folders)
 
     @property
     def failed_steps(self) -> int:
-        return sum(vf.failed_steps for vf in self.virtual_folders) + sum(r.failed_steps for r in self.single_files)
+        return sum(vf.failed_steps for vf in self.virtual_folders)
 
     @property
     def na_steps(self) -> int:
-        return sum(vf.na_steps for vf in self.virtual_folders) + sum(r.na_steps for r in self.single_files)
+        return sum(vf.na_steps for vf in self.virtual_folders)
 
     @property
     def failed_incomplete_steps(self) -> int:
-        return sum(vf.failed_incomplete_steps for vf in self.virtual_folders) + sum(r.failed_incomplete_steps for r in self.single_files)
+        return sum(vf.failed_incomplete_steps for vf in self.virtual_folders)

@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def result():  # type: ignore[no-untyped-def]
-    return analyze(EXAMPLES, "TCF")
+    return analyze(EXAMPLES)
 
 
 def test_helpers_resolved_semantically(result) -> None:  # type: ignore[no-untyped-def]

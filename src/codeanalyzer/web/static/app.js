@@ -440,7 +440,7 @@
   // Calls the local /pick-folder endpoint, which opens an OS dialog on this machine.
   (function () {
     var btn = document.getElementById("browse-btn");
-    var input = document.getElementById("folder");
+    var input = document.getElementById("folder") || document.getElementById("html-folder");
     if (!btn || !input) return;
     btn.hidden = false; // reveal only when JS is available
     btn.addEventListener("click", function () {

@@ -57,7 +57,7 @@ def _fake_response(tmp_path: Path) -> dict[str, Any]:
 
 def test_build_result_merges_metrics_and_helpers(tmp_path: Path) -> None:
     _write_sample(tmp_path)
-    result = build_result(tmp_path, "TCF", scan(tmp_path), _fake_response(tmp_path))
+    result = build_result(tmp_path, scan(tmp_path), _fake_response(tmp_path))
 
     s = result.summary
     assert s.file_count == 2
@@ -91,7 +91,7 @@ def test_build_result_merges_metrics_and_helpers(tmp_path: Path) -> None:
 @pytest.mark.skipif(find_analyzer() is None, reason="analyzer executable not built")
 def test_analyze_end_to_end_with_real_analyzer(tmp_path: Path) -> None:
     _write_sample(tmp_path)
-    result = analyze(tmp_path, "TCF")
+    result = analyze(tmp_path)
 
     assert result.summary.tcf_method_count == 1
     assert result.summary.helper_method_count == 1

@@ -31,10 +31,9 @@ def test_pick_folder_is_graceful_without_gui(client: FlaskClient) -> None:
 
 
 def test_last_folder_is_remembered(client: FlaskClient, tmp_path: Path) -> None:
-    client.post("/analyze", data={"folder": str(tmp_path), "prefix": "ABC"})
+    client.post("/analyze", data={"folder": str(tmp_path)})
     body = client.get("/").get_data(as_text=True)
     assert str(tmp_path) in body  # prefilled from saved state
-    assert 'value="ABC"' in body
 
 
 def test_access_token_gate() -> None:
@@ -45,7 +44,7 @@ def test_access_token_gate() -> None:
     assert c.get("/").status_code == 403  # no token -> blocked
     assert c.get(f"/?t={token}").status_code == 200  # token -> authed (sets cookie)
     # The cookie now authorizes follow-up requests.
-    assert c.post("/analyze", data={"folder": "", "prefix": "TCF"}).status_code == 200
+    assert c.post("/analyze", data={"folder": ""}).status_code == 200
 
 
 def test_index_shows_the_form(client: FlaskClient) -> None:
@@ -53,17 +52,17 @@ def test_index_shows_the_form(client: FlaskClient) -> None:
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
     assert "Folder path" in body
-    assert "TCF prefix" in body
+    assert "Folder path" in body
 
 
 def test_empty_folder_shows_error(client: FlaskClient) -> None:
-    resp = client.post("/analyze", data={"folder": "", "prefix": "TCF"})
+    resp = client.post("/analyze", data={"folder": ""})
     assert resp.status_code == 200
     assert "Please enter a folder path." in resp.get_data(as_text=True)
 
 
 def test_invalid_folder_shows_error(client: FlaskClient) -> None:
-    resp = client.post("/analyze", data={"folder": "/no/such/dir/zzz", "prefix": "TCF"})
+    resp = client.post("/analyze", data={"folder": "/no/such/dir/zzz"})
     assert resp.status_code == 200
     assert "does not exist" in resp.get_data(as_text=True)
 
@@ -73,7 +72,7 @@ def test_analyze_renders_report(client: FlaskClient, tmp_path: Path) -> None:
     (tmp_path / "S.cs").write_text(
         "class S { public int TCF_M() { return 1; } }", encoding="utf-8"
     )
-    resp = client.post("/analyze", data={"folder": str(tmp_path), "prefix": "TCF"})
+    resp = client.post("/analyze", data={"folder": str(tmp_path)})
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
     assert "Project Summary" in body
