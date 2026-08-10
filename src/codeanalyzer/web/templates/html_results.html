@@ -76,7 +76,7 @@
                 {% if report.failed_incomplete_steps > 0 %}
                   <tr class="report-row" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}" data-report-name="{{ report.file_name|lower }}">
                     <td class="l" style="padding-left: 4rem;">
-                      <span class="file-icon">📄</span> {{ report.file_name }}
+                      <span class="file-icon">📄</span> <a href="{{ url_for('view_report', path=report.absolute_path) }}" target="_blank" style="text-decoration: none; color: inherit;">{{ report.file_name }}</a>
                     </td>
                     <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ report.failed_incomplete_steps }}</td>
                   </tr>
@@ -167,7 +167,7 @@
             {% for report in sub.reports %}
               <tr class="report-row" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}" data-report-name="{{ report.file_name|lower }}">
                 <td class="l" style="padding-left: 4rem;">
-                  <span class="file-icon">📄</span> {{ report.file_name }}
+                  <span class="file-icon">📄</span> <a href="{{ url_for('view_report', path=report.absolute_path) }}" target="_blank" style="text-decoration: none; color: inherit;">{{ report.file_name }}</a>
                 </td>
                 <td style="text-align: center;">{{ report.total_steps }}</td>
                 <td style="text-align: center;"><span style="color: var(--success); font-weight: 500;">{{ report.passed_steps }}</span></td>
