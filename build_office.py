@@ -27,13 +27,17 @@ def build_project_for_office():
         print("HATA: Bilgisayarda 'dotnet' bulunamadı!")
         return
 
+    # Çıktı klasörünü açıkça belirtiyoruz (Hata almamak için)
+    cs_out_path = project_dir / "csharp-analyzer" / "src" / "TcfAnalyzer" / "bin" / "Release" / "net8.0" / "win-x64" / "publish"
+
     # shell=False hayat kurtarır, CMD.exe'yi by-pass eder
     subprocess.run([
         dotnet_exe, "publish", str(cs_project),
         "-c", "Release",
         "-r", "win-x64",
         "--self-contained", "true",
-        "-p:PublishSingleFile=true"
+        "-p:PublishSingleFile=true",
+        "-o", str(cs_out_path)
     ], shell=False, check=True)
 
     # ---------------------------------------------------------
@@ -42,8 +46,8 @@ def build_project_for_office():
     print("\n[2/3] C# EXE dosyası taşıma işlemi...")
     bundled_dir.mkdir(parents=True, exist_ok=True)
     
-    # .NET 8 derleme çıktısının bulunduğu standart yol
-    compiled_exe = project_dir / "csharp-analyzer" / "src" / "TcfAnalyzer" / "bin" / "Release" / "net8.0" / "win-x64" / "publish" / "TcfAnalyzer.exe"
+    # -o ile belirttiğimiz net hedef dosya
+    compiled_exe = cs_out_path / "analyzer.exe"
     
     if compiled_exe.exists():
         shutil.copy2(compiled_exe, bundled_dir / "analyzer.exe")
@@ -57,19 +61,15 @@ def build_project_for_office():
     # ---------------------------------------------------------
     print("\n[3/3] PyInstaller ile nihai proje oluşturuluyor...")
     
+    spec_path = project_dir / "packaging" / "codeanalyzer.spec"
+    
     # CMD kullanmamak için sys.executable (mevcut python.exe) kullanıyoruz
     pyinstaller_args = [
         sys.executable, "-m", "PyInstaller",
-        "--noconfirm",
-        "--onedir",           # Tek klasör formatı (antivirüs dostu)
-        "--windowed",         # Arkada siyah konsol ekranı açılmasını engeller
-        "--name", "CodeAnalyzer",
-        "--add-data", f"{project_dir / 'src' / 'codeanalyzer' / 'web' / 'templates'};codeanalyzer/web/templates",
-        "--add-data", f"{project_dir / 'src' / 'codeanalyzer' / 'web' / 'static'};codeanalyzer/web/static",
-        "--add-data", f"{bundled_dir};codeanalyzer/_bundled",
+        "--clean", "--noconfirm",
         "--distpath", str(release_dir),          # Çıktı klasörü doğrudan MASAÜSTÜ
         "--workpath", str(project_dir / "build"), # Geçici dosyalar
-        str(project_dir / "start_app.py")
+        str(spec_path)
     ]
 
     subprocess.run(pyinstaller_args, shell=False, check=True)
