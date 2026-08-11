@@ -174,6 +174,8 @@ def create_app() -> Flask:
             return render_template("dev.html", folder=folder, error=str(err))
         except AnalyzerError as err:
             return render_template("dev.html", folder=folder, error=f"C# analyzer error: {err}")
+        except Exception as err:
+            return render_template("dev.html", folder=folder, error=f"Analysis error: {err}")
             
         _save_state(folder)
         return render_template("dev_results.html", folder=folder, result=result)
@@ -191,6 +193,8 @@ def create_app() -> Flask:
             result = analyze_html_reports(folder_path)
         except InvalidFolderError as err:
             return render_template("html_index.html", folder=folder, error=str(err))
+        except Exception as err:
+            return render_template("html_index.html", folder=folder, error=f"Error reading HTML reports: {err}")
             
         _save_state(folder)
         return render_template("html_results.html", folder=folder, result=result)

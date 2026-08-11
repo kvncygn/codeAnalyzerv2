@@ -5,15 +5,15 @@ from pathlib import Path
 
 from .models import HtmlTestReport, HtmlSubFolder, HtmlVirtualFolder, HtmlAnalysisResult
 
-_TOTAL_RE = re.compile(r"<th>\s*Number of Total Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_PASSED_RE = re.compile(r"<th>\s*Number of Passed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_FAILED_RE = re.compile(r"<th>\s*Number of Failed Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_NA_RE = re.compile(r"<th>\s*Number of N/A Steps\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_IDX_TOTAL_RE = re.compile(r"<th>\s*NR TOTAL TEST CASES\s*</th>\s*<td>\s*<b>\s*(\d+)\s*</b>\s*</td>", re.IGNORECASE)
-_IDX_PASSED_RE = re.compile(r"<th>\s*NR PASSED TEST CASES\s*</th>\s*<td>\s*<b>\s*(\d+)(.*?)\s*</b>\s*</td>", re.IGNORECASE)
-_IDX_FAILED_RE = re.compile(r"<th>\s*NR FAILED TEST CASES\s*</th>\s*<td>\s*<b>\s*(\d+)(.*?)\s*</b>\s*</td>", re.IGNORECASE)
+_TOTAL_RE = re.compile(r"<th>\s*Number of Total Steps\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_PASSED_RE = re.compile(r"<th>\s*Number of Passed Steps\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_FAILED_RE = re.compile(r"<th>\s*Number of Failed Steps\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_NA_RE = re.compile(r"<th>\s*Number of N/A Steps\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_IDX_TOTAL_RE = re.compile(r"<th>\s*NR TOTAL TEST CASES\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_IDX_PASSED_RE = re.compile(r"<th>\s*NR PASSED TEST CASES\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)(.*?)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
+_IDX_FAILED_RE = re.compile(r"<th>\s*NR FAILED TEST CASES\s*</th>\s*<td>\s*(?:<[^>]+>)*\s*(\d+)(.*?)\s*(?:</[^>]+>)*\s*</td>", re.IGNORECASE)
 _FAILED_STEP_RE = re.compile(r'<tr>\s*<td[^>]*>\s*(\d+)\s*</td>(?:(?!<tr>).)*?<td class="error">\s*FAILED\s*</td>', re.DOTALL | re.IGNORECASE)
-_FAILED_INC_RE = re.compile(r'<td class="error">\s*FAILED\(INCOMPLETE\)\s*</td>', re.IGNORECASE)
+_FAILED_INC_RE = re.compile(r'<td[^>]*>(?:(?!</td>).)*?FAILED\s*\(?\s*INCOMPLETE\s*\)?(?:(?!</td>).)*?</td>', re.IGNORECASE | re.DOTALL)
 
 
 def extract_metric(pattern: re.Pattern[str], text: str) -> int:
@@ -30,7 +30,7 @@ def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
     """Scan the given folder for .html files and group them into virtual folders."""
     all_reports: list[tuple[HtmlTestReport, str, str]] = []
     index_report = None
-    TAGS = ["SCA_WINDOWS", "MANUAL", "SCA_MANUAL", "WINDOWS"]
+    TAGS = ["SCN", "SCA_WINDOWS", "MANUAL", "SCA_MANUAL"]
     
     for file_path in folder.rglob("*.html"):
         name = file_path.name
@@ -125,7 +125,8 @@ def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
         # Create subfolders for all tags even if empty, as requested
         for tag in TAGS:
             sorted_reports = sorted(tag_map[tag], key=lambda r: r.file_name)
-            subfolders.append(HtmlSubFolder(name=tag, reports=sorted_reports))
+            display_name = "WINDOWS" if tag == "SCN" else tag
+            subfolders.append(HtmlSubFolder(name=display_name, reports=sorted_reports))
         virtual_folders.append(HtmlVirtualFolder(name=bf_name, subfolders=subfolders))
             
     return HtmlAnalysisResult(

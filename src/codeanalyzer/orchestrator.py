@@ -45,7 +45,7 @@ def analyze(folder: Path, analyzer_path: Path | None = None) -> AnalysisResult:
 
 
 def analyze_dev(folder: Path, analyzer_path: Path | None = None) -> DevAnalysisResult:
-    """Scan *folder*, run the C# analyzer, and build a DevAnalysisResult containing all methods."""
+    """Scan *folder*, run the C/C++ analyzer, and build a DevAnalysisResult containing all methods."""
     error = validate_target(folder)
     if error is not None:
         raise InvalidFolderError(error)

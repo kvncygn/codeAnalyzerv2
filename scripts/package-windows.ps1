@@ -18,7 +18,7 @@ $env:DOTNET_NOLOGO = "1"
 # --- AYAR ---
 # Eger bu degeri $true yaparsaniz, analyzer 77 MB olur ama .NET yuklu olmayan PC'lerde de calisir.
 # Eger bu degeri $false yaparsaniz, analyzer 2-3 MB olur ama ofisteki PC'de .NET 8 yuklu olmalidir.
-$SelfContained = $false
+$SelfContained = $true
 
 if ($SelfContained) {
     Write-Host "== Publishing self-contained analyzer (win-x64) =="
