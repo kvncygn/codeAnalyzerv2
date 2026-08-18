@@ -61,7 +61,7 @@ def analyze_html_reports(folder: Path) -> HtmlAnalysisResult:
                 passed = extract_metric(_PASSED_RE, content)
                 failed = extract_metric(_FAILED_RE, content)
                 na = extract_metric(_NA_RE, content)
-                failed_inc = len(_FAILED_INC_RE.findall(content))
+                failed_inc = 1 if _FAILED_INC_RE.search(content) else 0
                 passed_pct = ""
                 failed_pct = ""
             

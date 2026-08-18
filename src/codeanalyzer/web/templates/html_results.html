@@ -55,9 +55,9 @@
         {% endif %}
 
         {% for vf in inc_vfs %}
-          <tr class="group-row" style="background: #fff8e6; cursor: pointer; user-select: none;" data-folder-name="{{ vf.name|lower }}">
+          <tr class="group-row collapsed" style="background: #fff8e6; cursor: pointer; user-select: none;" data-folder-name="{{ vf.name|lower }}">
             <td class="l">
-              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▶</span>
               <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong>
             </td>
             <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ vf.failed_incomplete_steps }}</td>
@@ -65,9 +65,9 @@
           
           {% for sub in vf.subfolders %}
             {% if sub.failed_incomplete_steps > 0 %}
-              <tr class="subfolder-row" style="background: #fdfaf3; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
+              <tr class="subfolder-row collapsed" style="background: #fdfaf3; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
                 <td class="l" style="padding-left: 2rem;">
-                  <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+                  <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▶</span>
                   <span class="folder-icon">📁</span> <strong>{{ sub.name }}</strong>
                 </td>
                 <td style="text-align: center; font-weight: bold; color: var(--amber);">{{ sub.failed_incomplete_steps }}</td>
@@ -141,9 +141,9 @@
 
         <!-- Virtual Folders -->
         {% for vf in result.virtual_folders %}
-          <tr class="group-row" style="background: #f7f9fc; cursor: pointer; user-select: none;" data-folder-name="{{ vf.name|lower }}">
+          <tr class="group-row collapsed" style="background: #f7f9fc; cursor: pointer; user-select: none;" data-folder-name="{{ vf.name|lower }}">
             <td class="l">
-              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+              <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▶</span>
               <span class="folder-icon">📁</span> <strong>{{ vf.name }}</strong> 
             </td>
             <td style="text-align: center; font-weight: bold;">{{ vf.total_steps }}</td>
@@ -153,9 +153,9 @@
           </tr>
           
           {% for sub in vf.subfolders %}
-            <tr class="subfolder-row" style="background: #fcfdfe; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
+            <tr class="subfolder-row collapsed" style="background: #fcfdfe; cursor: pointer; user-select: none;" data-parent-folder="{{ vf.name|lower }}" data-sub-name="{{ sub.name|lower }}">
               <td class="l" style="padding-left: 2rem;">
-                <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▼</span>
+                <span class="toggle-icon" style="display: inline-block; width: 1.2em; font-size: 0.8em; color: var(--muted);">▶</span>
                 <span class="folder-icon">📁</span> <strong>{{ sub.name }}</strong>
                 <span class="muted" style="margin-left: 8px; font-size: 0.9em;">({{ sub.reports|length }} reports)</span>
               </td>
@@ -332,6 +332,9 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
+
+    // Run filter on load to hide initially collapsed rows
+    applyFilter();
 });
 </script>
 

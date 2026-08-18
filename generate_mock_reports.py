@@ -90,12 +90,21 @@ def create_mock_reports():
         ("TCF_Payment_Fail_RC1_testC.html", 5, 4, 0, 1),
         
         # Single files (No virtual folder, just root)
-        ("TCF_Register_Success_RC1_only.html", 20, 20, 0, 0),
-        ("TCF_Dashboard_Load_v2.html", 8, 8, 0, 0), # No RC1 in name, so won't be grouped
-        ("Random_Report.html", 2, 1, 1, 0) # Not starting with TCF, won't be grouped
+        ("TCF_Register_Success_RC1_only.html", 20, 20, 0, 0, False),
+        ("TCF_Dashboard_Load_v2.html", 8, 8, 0, 0, False), # No RC1 in name, so won't be grouped
+        ("Random_Report.html", 2, 1, 1, 0, False), # Not starting with TCF, won't be grouped
+        
+        # Test for FAILED INCOMPLETE logic (multiple incomplete steps)
+        ("TC_SCN_TCF_Incomplete_Test_RC1.html", 10, 5, 5, 0, True),
+        ("TC_SCA_WINDOWS_TCF_Incomplete_Test_RC1.html", 5, 2, 3, 0, True)
     ]
     
-    for filename, total, passed, failed, na in reports:
+    for row in reports:
+        if len(row) == 5:
+            filename, total, passed, failed, na = row
+            is_incomplete = False
+        else:
+            filename, total, passed, failed, na, is_incomplete = row
         filepath = base_dir / filename
         
         failed_steps_html = ""
@@ -123,7 +132,7 @@ def create_mock_reports():
               (Mock) (False)
             </td>
             <td class="error">
-              FAILED
+              FAILED{ " (INCOMPLETE)" if is_incomplete else "" }
             </td>
             </tr>"""
             
