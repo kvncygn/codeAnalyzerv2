@@ -52,8 +52,16 @@ def _slug(value: str) -> str:
     return "".join(ch if ch.isalnum() else "-" for ch in value)
 
 
+import sys
+
 def create_app() -> Flask:
-    app = Flask(__name__)
+    if getattr(sys, 'frozen', False):
+        meipass = getattr(sys, '_MEIPASS', "")
+        base_dir = Path(meipass) / "codeanalyzer" / "web"
+        app = Flask(__name__, template_folder=str(base_dir / "templates"), static_folder=str(base_dir / "static"))
+    else:
+        app = Flask(__name__)
+        
     app.add_template_filter(_slug, "slug")
     app.jinja_env.globals["app_version"] = __version__  # type: ignore
 
